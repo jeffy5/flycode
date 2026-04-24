@@ -21,6 +21,80 @@ String _projectDisplayName(Project project) {
   return parts.lastWhere((p) => p.isNotEmpty, orElse: () => worktree);
 }
 
+String _normalizeSearchText(String value) {
+  final buffer = StringBuffer();
+  for (final rune in value.toLowerCase().runes) {
+    final char = String.fromCharCode(rune);
+    final isLetterOrDigit = RegExp(r'[a-z0-9\u4e00-\u9fff]').hasMatch(char);
+    if (isLetterOrDigit) {
+      buffer.write(char);
+    }
+  }
+  return buffer.toString();
+}
+
+Iterable<String> _searchTokens(Project project) sync* {
+  final values = <String>[_projectDisplayName(project), project.worktree];
+
+  for (final value in values) {
+    for (final segment in value.split(RegExp(r'[\\/\s._-]+'))) {
+      final normalizedSegment = _normalizeSearchText(segment);
+      if (normalizedSegment.isNotEmpty) {
+        yield normalizedSegment;
+      }
+    }
+  }
+}
+
+bool _isSubsequenceMatch(String query, String target) {
+  if (query.isEmpty) return true;
+  if (target.isEmpty) return false;
+
+  var queryIndex = 0;
+  for (var i = 0; i < target.length && queryIndex < query.length; i++) {
+    if (target[i] == query[queryIndex]) {
+      queryIndex++;
+    }
+  }
+
+  return queryIndex == query.length;
+}
+
+bool _matchesProjectQuery(Project project, String query) {
+  final normalizedQuery = _normalizeSearchText(query.trim());
+  if (normalizedQuery.isEmpty) return true;
+
+  final displayName = _projectDisplayName(project);
+  final normalizedDisplayName = _normalizeSearchText(displayName);
+  final candidates = <String>{displayName, project.worktree};
+
+  for (final candidate in candidates) {
+    final normalizedCandidate = _normalizeSearchText(candidate);
+    if (normalizedCandidate.contains(normalizedQuery)) {
+      return true;
+    }
+  }
+
+  if (_isSubsequenceMatch(normalizedQuery, normalizedDisplayName)) {
+    return true;
+  }
+
+  for (final token in _searchTokens(project)) {
+    if (_isSubsequenceMatch(normalizedQuery, token)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+List<Project> _filterProjects(List<Project> projects, String query) {
+  if (query.trim().isEmpty) return projects;
+  return projects
+      .where((project) => _matchesProjectQuery(project, query))
+      .toList();
+}
+
 String _formatUpdatedTime(BuildContext context, int timestampMs) {
   final l10n = context.l10n;
   final dt = DateTime.fromMillisecondsSinceEpoch(timestampMs);
@@ -139,11 +213,31 @@ void _openProjectChat(BuildContext context, WidgetRef ref, Project project) {
   context.push('/chat', extra: ChatRouteArgs(directory: project.worktree));
 }
 
-class ProjectListPage extends ConsumerWidget {
+class ProjectListPage extends ConsumerStatefulWidget {
   const ProjectListPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ProjectListPage> createState() => _ProjectListPageState();
+}
+
+class _ProjectListPageState extends ConsumerState<ProjectListPage> {
+  late final TextEditingController _searchController;
+  String _searchQuery = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = context.l10n;
     final colorScheme = Theme.of(context).colorScheme;
     final tokens = context.tokens;
@@ -171,38 +265,100 @@ class ProjectListPage extends ConsumerWidget {
 
     Widget buildHeader() {
       return Padding(
-        padding: EdgeInsets.fromLTRB(pagePadding, 8, pagePadding, 0),
-        child: SizedBox(
-          height: 64,
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  l10n.projectListHeader,
-                  style: TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontSize: 28,
-                    fontWeight: FontWeight.w700,
-                    height: 1.1,
-                    color: colorScheme.onSurface,
+        padding: EdgeInsets.fromLTRB(pagePadding, 8, pagePadding, 12),
+        child: Column(
+          children: [
+            SizedBox(
+              height: 64,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      l10n.projectListHeader,
+                      style: TextStyle(
+                        fontFamily: 'PlusJakartaSans',
+                        fontSize: 28,
+                        fontWeight: FontWeight.w700,
+                        height: 1.1,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => showOpenProjectSheet(context),
+                    style: TextButton.styleFrom(
+                      foregroundColor: colorScheme.primary,
+                      minimumSize: const Size(0, 32),
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: Text(
+                      l10n.projectListNew,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            TextField(
+              controller: _searchController,
+              onChanged: (value) {
+                setState(() {
+                  _searchQuery = value;
+                });
+              },
+              textInputAction: TextInputAction.search,
+              style: TextStyle(fontSize: 15, color: colorScheme.onSurface),
+              decoration: InputDecoration(
+                hintText: l10n.openProjectPlaceholderSearch,
+                hintStyle: TextStyle(
+                  fontSize: 15,
+                  color: tokens.mutedForeground,
+                ),
+                prefixIcon: Icon(
+                  Icons.search,
+                  size: 20,
+                  color: tokens.mutedForeground,
+                ),
+                suffixIcon: _searchQuery.trim().isEmpty
+                    ? null
+                    : GestureDetector(
+                        onTap: () {
+                          _searchController.clear();
+                          setState(() {
+                            _searchQuery = '';
+                          });
+                        },
+                        child: Icon(
+                          Icons.close_rounded,
+                          size: 18,
+                          color: tokens.mutedForeground,
+                        ),
+                      ),
+                contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                filled: true,
+                fillColor: tokens.accent,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(tokens.radiusL),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(tokens.radiusL),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(tokens.radiusL),
+                  borderSide: BorderSide(
+                    color: colorScheme.primary.withValues(alpha: 0.35),
+                    width: 1.3,
                   ),
                 ),
               ),
-              TextButton(
-                onPressed: () => showOpenProjectSheet(context),
-                style: TextButton.styleFrom(
-                  foregroundColor: colorScheme.primary,
-                  minimumSize: const Size(0, 32),
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-                child: Text(
-                  l10n.projectListNew,
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       );
     }
@@ -291,6 +447,10 @@ class ProjectListPage extends ConsumerWidget {
               ),
               data: (pinnedProjects) {
                 final sortedProjects = _sortProjects(projects, pinnedProjects);
+                final visibleProjects = _filterProjects(
+                  sortedProjects,
+                  _searchQuery,
+                );
 
                 if (sortedProjects.isEmpty) {
                   return buildPageLayout(
@@ -360,6 +520,54 @@ class ProjectListPage extends ConsumerWidget {
                   );
                 }
 
+                if (visibleProjects.isEmpty) {
+                  return buildPageLayout(
+                    RefreshIndicator(
+                      onRefresh: refreshProjects,
+                      child: ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: EdgeInsets.fromLTRB(
+                          pagePadding,
+                          20,
+                          pagePadding,
+                          contentBottomPadding,
+                        ),
+                        children: [
+                          SizedBox(
+                            height: MediaQuery.of(context).size.height * 0.12,
+                          ),
+                          Icon(
+                            Icons.search_off_rounded,
+                            size: 44,
+                            color: tokens.mutedForeground.withValues(
+                              alpha: 0.55,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            l10n.openProjectNoMatch,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: colorScheme.onSurface,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            _searchQuery.trim(),
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: tokens.mutedForeground,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+
                 return buildPageLayout(
                   RefreshIndicator(
                     onRefresh: refreshProjects,
@@ -371,11 +579,11 @@ class ProjectListPage extends ConsumerWidget {
                         pagePadding,
                         contentBottomPadding,
                       ),
-                      itemCount: sortedProjects.length,
+                      itemCount: visibleProjects.length,
                       separatorBuilder: (context, index) =>
                           const SizedBox(height: 16),
                       itemBuilder: (context, index) {
-                        final project = sortedProjects[index];
+                        final project = visibleProjects[index];
                         final isPinned = pinnedProjects.containsKey(
                           project.worktree,
                         );
