@@ -1,9 +1,7 @@
 import 'package:diff_match_patch/diff_match_patch.dart';
 import 'package:flutter/material.dart';
-import 'package:highlight/highlight.dart' show highlight, Node;
 
 import '../../theme/app_tokens.dart';
-import 'code_highlight_theme.dart';
 
 // ──────────────────────────────────────────────
 // Diff 渲染器（从 session_diff_page.dart 提取）
@@ -44,20 +42,6 @@ class DiffView extends StatelessWidget {
   final double? maxHeight;
 
   static const int _contextLines = 3;
-
-  /// 从文件名推断语言，排除纯文本类型
-  String? get _language {
-    if (fileName == null || fileName!.isEmpty) return null;
-
-    final ext = fileName!.toLowerCase().split('.').lastOrNull;
-    if (ext == null || ext.isEmpty) return null;
-
-    // 排除纯文本类型
-    const textExtensions = {'txt', 'md', 'markdown', 'log', 'csv', 'tsv'};
-    if (textExtensions.contains(ext)) return null;
-
-    return ext;
-  }
 
   /// 检查是否超过最大行数限制
   bool get _isTooLarge {
@@ -176,7 +160,6 @@ class DiffView extends StatelessWidget {
     }
 
     final items = _buildDisplayItems(lines);
-    final highlightTheme = buildHighlightTheme(context);
 
     return Container(
       decoration: BoxDecoration(
@@ -201,11 +184,7 @@ class DiffView extends StatelessWidget {
                 if (item is CollapsedHint) {
                   return CollapsedHintRow(count: item.count);
                 }
-                return DiffLineRow(
-                  line: item as DiffLine,
-                  language: _language,
-                  highlightTheme: highlightTheme,
-                );
+                return DiffLineRow(line: item as DiffLine);
               }),
             ],
           );
@@ -297,20 +276,13 @@ class CollapsedHintRow extends StatelessWidget {
 }
 
 // ──────────────────────────────────────────────
-// 单行渲染（支持语法高亮）
+// 单行渲染
 // ──────────────────────────────────────────────
 
 class DiffLineRow extends StatelessWidget {
-  const DiffLineRow({
-    super.key,
-    required this.line,
-    this.language,
-    required this.highlightTheme,
-  });
+  const DiffLineRow({super.key, required this.line});
 
   final DiffLine line;
-  final String? language;
-  final Map<String, TextStyle> highlightTheme;
 
   @override
   Widget build(BuildContext context) {
@@ -335,36 +307,15 @@ class DiffLineRow extends StatelessWidget {
         prefix = ' ';
     }
 
-    // 构建行内容：使用语法高亮或纯文本
-    final Widget content;
-    if (language != null && line.text.isNotEmpty) {
-      // 使用底层 highlight API 解析，手动构建 RichText
-      // 这样可以避免 HighlightView 的 Container 背景色问题
-      final result = highlight.parse(line.text, language: language);
-      final spans = _convertNodes(result.nodes ?? [], highlightTheme);
-
-      content = RichText(
-        text: TextSpan(
-          style: TextStyle(
-            fontSize: 12,
-            fontFamily: 'monospace',
-            height: 1.5,
-            color: textColor,
-          ),
-          children: spans.isEmpty ? [TextSpan(text: line.text)] : spans,
-        ),
-      );
-    } else {
-      content = Text(
-        line.text,
-        style: TextStyle(
-          fontSize: 12,
-          color: textColor,
-          fontFamily: 'monospace',
-          height: 1.5,
-        ),
-      );
-    }
+    final content = Text(
+      line.text,
+      style: TextStyle(
+        fontSize: 12,
+        color: textColor,
+        fontFamily: 'monospace',
+        height: 1.5,
+      ),
+    );
 
     return Container(
       color: bg,
@@ -390,33 +341,5 @@ class DiffLineRow extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  /// 将 highlight 解析的节点转换为 TextSpan 列表
-  List<TextSpan> _convertNodes(List<Node> nodes, Map<String, TextStyle> theme) {
-    final spans = <TextSpan>[];
-
-    void traverse(Node node, List<TextSpan> currentSpans) {
-      if (node.value != null) {
-        // 叶子节点：有文本内容
-        final style = node.className != null ? theme[node.className!] : null;
-        currentSpans.add(TextSpan(text: node.value, style: style));
-      } else if (node.children != null) {
-        // 内部节点：有子节点
-        final children = <TextSpan>[];
-        final style = node.className != null ? theme[node.className!] : null;
-        currentSpans.add(TextSpan(children: children, style: style));
-
-        for (var i = 0; i < node.children!.length; i++) {
-          traverse(node.children![i], children);
-        }
-      }
-    }
-
-    for (final node in nodes) {
-      traverse(node, spans);
-    }
-
-    return spans;
   }
 }
