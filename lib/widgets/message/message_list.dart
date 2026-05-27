@@ -89,6 +89,7 @@ class _MessageListViewState extends State<MessageListView> {
   List<MessageWithParts>? _frozenMessages;
   _PendingScrollAction _pendingScrollAction = _PendingScrollAction.none;
   bool _scrollActionScheduled = false;
+  final Map<String, bool> _toolExpandedStates = <String, bool>{};
 
   @override
   void initState() {
@@ -270,6 +271,18 @@ class _MessageListViewState extends State<MessageListView> {
     });
   }
 
+  bool _toolIsExpanded(ToolPart toolPart) =>
+      _toolExpandedStates[toolPart.id] ?? true;
+
+  void _setToolExpanded(ToolPart toolPart, bool isExpanded) {
+    if (_toolExpandedStates[toolPart.id] == isExpanded) {
+      return;
+    }
+    setState(() {
+      _toolExpandedStates[toolPart.id] = isExpanded;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final sourceMessages = (!_autoFollowBottom && _isDetachedFromBottom)
@@ -320,6 +333,8 @@ class _MessageListViewState extends State<MessageListView> {
                 prevIsUser: prevIsUser,
                 isLatestMessage: index == 0,
                 onNavigateToSubSession: widget.onNavigateToSubSession,
+                toolExpandedResolver: _toolIsExpanded,
+                onToolExpandedChanged: _setToolExpanded,
               );
             },
           ),

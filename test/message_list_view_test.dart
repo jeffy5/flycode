@@ -2,7 +2,7 @@
 
 import 'package:flycode/l10n/app_localizations.dart';
 import 'package:flycode/service/api/api_client.dart';
-import 'package:flycode/service/api/models/message.dart';
+import 'package:flycode/service/api/models/message.dart' as message;
 import 'package:flycode/service/api/models/parts.dart';
 import 'package:flycode/service/api/models/provider.dart';
 import 'package:flycode/service/api/provider_api.dart';
@@ -32,7 +32,7 @@ class _FakeProviderApi extends ProviderApi {
   );
 }
 
-Widget _buildHarness(List<MessageWithParts> messages) {
+Widget _buildHarness(List<message.MessageWithParts> messages) {
   return ProviderScope(
     overrides: [
       providerApiProvider.overrideWith((ref) async => _FakeProviderApi()),
@@ -55,16 +55,16 @@ Widget _buildHarness(List<MessageWithParts> messages) {
   );
 }
 
-MessageWithParts _message(int index, {int repeat = 4}) {
+message.MessageWithParts _message(int index, {int repeat = 4}) {
   final messageId = 'message-$index';
-  return MessageWithParts(
-    info: UserMessage(
+  return message.MessageWithParts(
+    info: message.UserMessage(
       id: messageId,
       sessionID: 'session-1',
       role: 'user',
-      time: MessageTime(created: index + 1),
+      time: message.MessageTime(created: index + 1),
       agent: 'codex',
-      model: MessageModel(providerID: 'openai', modelID: 'gpt-5.4'),
+      model: message.MessageModel(providerID: 'openai', modelID: 'gpt-5.4'),
     ),
     parts: [
       TextPart(
@@ -79,8 +79,52 @@ MessageWithParts _message(int index, {int repeat = 4}) {
   );
 }
 
-List<MessageWithParts> _messages(int count, {int repeat = 4}) =>
+List<message.MessageWithParts> _messages(int count, {int repeat = 4}) =>
     List.generate(count, (index) => _message(index, repeat: repeat));
+
+message.MessageWithParts _assistantToolMessage(int index) {
+  final messageId = 'assistant-message-$index';
+  return message.MessageWithParts(
+    info: message.AssistantMessage(
+      id: messageId,
+      sessionID: 'session-1',
+      role: 'assistant',
+      time: message.MessageTime(created: index + 1, completed: index + 2),
+      parentID: 'parent-$index',
+      modelID: 'gpt-5.4',
+      providerID: 'openai',
+      mode: 'chat',
+      path: message.MessagePath(cwd: '/workspace', root: '/workspace'),
+      tokens: message.MessageTokens(),
+    ),
+    parts: [
+      ToolPart(
+        id: 'tool-part-$index',
+        sessionID: 'session-1',
+        messageID: messageId,
+        type: 'tool',
+        callID: 'tool-call-$index',
+        tool: 'write',
+        metadata: null,
+        state: ToolStateCompleted(
+          status: 'completed',
+          input: {'filePath': '/workspace/lib/file_$index.dart'},
+          output: 'done',
+          title: '',
+          metadata: const {},
+          time: ToolStateCompletedTime(start: 0, end: 1),
+        ),
+      ),
+      TextPart(
+        id: 'assistant-text-$index',
+        sessionID: 'session-1',
+        messageID: messageId,
+        type: 'text',
+        text: 'Assistant message $index',
+      ),
+    ],
+  );
+}
 
 IgnorePointer _scrollButtonGuard(WidgetTester tester) {
   return tester.widget<IgnorePointer>(
@@ -245,4 +289,27 @@ void main() {
       expect(_isPinnedToBottom(tester), isTrue);
     },
   );
+
+  testWidgets('tool expansion state survives offscreen scroll rebuilds', (
+    WidgetTester tester,
+  ) async {
+    final messages = [..._messages(24), _assistantToolMessage(99)];
+
+    await tester.pumpWidget(_buildHarness(messages));
+    await tester.pumpAndSettle();
+
+    expect(find.byIcon(Icons.expand_less), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.expand_less).first);
+    await tester.pumpAndSettle();
+
+    expect(find.byIcon(Icons.expand_more), findsOneWidget);
+
+    await tester.drag(find.byType(ListView), const Offset(0, 1400));
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(ListView), const Offset(0, -1400));
+    await tester.pumpAndSettle();
+
+    expect(find.byIcon(Icons.expand_more), findsOneWidget);
+  });
 }

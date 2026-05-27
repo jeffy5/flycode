@@ -16,6 +16,8 @@ class MessagePart extends StatelessWidget {
   final bool isStreaming;
   final bool animateText;
   final void Function(String sessionId)? onNavigateToSubSession;
+  final bool? toolIsExpanded;
+  final ValueChanged<bool>? onToolExpandedChanged;
 
   const MessagePart({
     super.key,
@@ -24,6 +26,8 @@ class MessagePart extends StatelessWidget {
     this.isStreaming = false,
     this.animateText = false,
     this.onNavigateToSubSession,
+    this.toolIsExpanded,
+    this.onToolExpandedChanged,
   });
 
   @override
@@ -48,6 +52,8 @@ class MessagePart extends StatelessWidget {
       return ToolUseWidget(
         toolPart: part as ToolPart,
         onNavigateToSubSession: onNavigateToSubSession,
+        isExpanded: toolIsExpanded ?? true,
+        onExpandedChanged: onToolExpandedChanged,
       );
     } else if (part is FilePart) {
       final filePart = part as FilePart;

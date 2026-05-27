@@ -20,6 +20,9 @@ class MessageBubble extends ConsumerStatefulWidget {
   final bool prevIsUser;
   final bool isLatestMessage;
   final void Function(String sessionId)? onNavigateToSubSession;
+  final bool Function(ToolPart toolPart)? toolExpandedResolver;
+  final void Function(ToolPart toolPart, bool isExpanded)?
+  onToolExpandedChanged;
 
   const MessageBubble({
     super.key,
@@ -27,6 +30,8 @@ class MessageBubble extends ConsumerStatefulWidget {
     required this.prevIsUser,
     this.isLatestMessage = false,
     this.onNavigateToSubSession,
+    this.toolExpandedResolver,
+    this.onToolExpandedChanged,
   });
 
   @override
@@ -307,6 +312,13 @@ class _MessageBubbleState extends ConsumerState<MessageBubble> {
           part: part,
           isUser: true,
           onNavigateToSubSession: widget.onNavigateToSubSession,
+          toolIsExpanded: part is ToolPart
+              ? widget.toolExpandedResolver?.call(part)
+              : null,
+          onToolExpandedChanged: part is ToolPart
+              ? (isExpanded) =>
+                    widget.onToolExpandedChanged?.call(part, isExpanded)
+              : null,
         ),
       );
       index += 1;
@@ -355,6 +367,15 @@ class _MessageBubbleState extends ConsumerState<MessageBubble> {
                   isStreaming &&
                   i == lastAnimatedTextPartIndex,
               onNavigateToSubSession: widget.onNavigateToSubSession,
+              toolIsExpanded: parts[i] is ToolPart
+                  ? widget.toolExpandedResolver?.call(parts[i] as ToolPart)
+                  : null,
+              onToolExpandedChanged: parts[i] is ToolPart
+                  ? (isExpanded) => widget.onToolExpandedChanged?.call(
+                      parts[i] as ToolPart,
+                      isExpanded,
+                    )
+                  : null,
             ),
             if (i == lastTextPartIndex) ...[
               const SizedBox(height: 6),
