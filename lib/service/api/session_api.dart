@@ -183,11 +183,14 @@ class SessionApi {
       extraHeaders['x-opencode-directory'] = directory;
     }
 
+    // Command sends intentionally opt out of the client timeout because the UI
+    // dispatches them detached; do not add a timeout back for this endpoint.
     await _client.post(
       '/session/$id/command',
       queryParameters: queryParams,
       body: data?.toJson(),
       extraHeaders: extraHeaders,
+      useTimeout: false,
     );
   }
 
@@ -361,11 +364,14 @@ class SessionApi {
       extraHeaders['x-opencode-directory'] = directory;
     }
 
+    // Shell sends intentionally opt out of the client timeout because the UI
+    // dispatches them detached; do not add a timeout back for this endpoint.
     await _client.post(
       '/session/$id/shell',
       queryParameters: queryParams,
       body: data,
       extraHeaders: extraHeaders,
+      useTimeout: false,
     );
   }
 

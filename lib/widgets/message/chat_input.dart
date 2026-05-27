@@ -540,25 +540,33 @@ class ChatInputState extends ConsumerState<ChatInput> {
       if (sessionId == null) return;
 
       if (isShellMode) {
-        await _dispatchShell(
-          api,
-          sessionId,
-          directory,
-          chatConfig,
-          shellCommand,
-          variant,
-        );
-      } else {
-        final matchedCommand = _parseCommand(text);
-        if (matchedCommand != null) {
-          await _dispatchCommand(
+        // Shell sends are intentionally fire-and-forget; do not add await here
+        // because the backend may keep this dispatch request open.
+        unawaited(
+          _dispatchShell(
             api,
             sessionId,
             directory,
             chatConfig,
+            shellCommand,
             variant,
-            matchedCommand,
-            text,
+          ).catchError(_handleDetachedDispatchError),
+        );
+      } else {
+        final matchedCommand = _parseCommand(text);
+        if (matchedCommand != null) {
+          // Command sends are intentionally fire-and-forget; do not add await
+          // here because the backend may keep this dispatch request open.
+          unawaited(
+            _dispatchCommand(
+              api,
+              sessionId,
+              directory,
+              chatConfig,
+              variant,
+              matchedCommand,
+              text,
+            ).catchError(_handleDetachedDispatchError),
           );
         } else {
           await _dispatchPrompt(api, sessionId, directory, chatConfig, variant);
@@ -653,6 +661,13 @@ class ChatInputState extends ConsumerState<ChatInput> {
         variant: variant,
       ),
     );
+  }
+
+  void _handleDetachedDispatchError(Object error, StackTrace stackTrace) {
+    debugPrint('Detached command/shell dispatch failed: $error');
+    if (kDebugMode) {
+      debugPrintStack(stackTrace: stackTrace);
+    }
   }
 
   Future<void> _dispatchShell(

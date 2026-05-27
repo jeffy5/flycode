@@ -65,7 +65,7 @@ Future<ApiClient> apiClient(Ref ref) async {
 }
 
 class ApiClient {
-  static const Duration _requestTimeout = Duration(seconds: 15);
+  static const Duration _defaultRequestTimeout = Duration(seconds: 15);
   static const int _timeoutStatusCode = 408;
   static const int _networkStatusCode = 503;
   static const int _unknownStatusCode = 500;
@@ -75,6 +75,7 @@ class ApiClient {
   final String? _password;
   final http.Client _client;
   final HttpClientFactory _streamClientFactory;
+  final Duration _requestTimeout;
   final Set<http.Client> _activeStreamClients = <http.Client>{};
 
   bool _isClosed = false;
@@ -85,11 +86,13 @@ class ApiClient {
     String? password,
     http.Client? client,
     HttpClientFactory? streamClientFactory,
+    Duration requestTimeout = _defaultRequestTimeout,
   }) : _baseUrl = baseUrl,
        _username = username,
        _password = password,
        _client = client ?? http.Client(),
-       _streamClientFactory = streamClientFactory ?? http.Client.new;
+       _streamClientFactory = streamClientFactory ?? http.Client.new,
+       _requestTimeout = requestTimeout;
 
   String get baseUrl => _baseUrl;
 
@@ -160,10 +163,14 @@ class ApiClient {
   }
 
   Future<dynamic> _executeRequest(
-    Future<http.Response> Function() request,
-  ) async {
+    Future<http.Response> Function() request, {
+    bool useTimeout = true,
+  }) async {
     try {
-      final response = await request().timeout(_requestTimeout);
+      final pendingResponse = request();
+      final response = useTimeout
+          ? await pendingResponse.timeout(_requestTimeout)
+          : await pendingResponse;
       return _handleResponse(response);
     } on ApiException {
       rethrow;
@@ -202,6 +209,7 @@ class ApiClient {
     String path, {
     Map<String, String>? queryParameters,
     Map<String, String>? extraHeaders,
+    bool useTimeout = true,
   }) async {
     _ensureOpen();
     final headers = _getHeaders();
@@ -211,6 +219,7 @@ class ApiClient {
         _getUri(path, queryParameters: queryParameters),
         headers: headers,
       ),
+      useTimeout: useTimeout,
     );
   }
 
@@ -219,6 +228,7 @@ class ApiClient {
     dynamic body,
     Map<String, String>? queryParameters,
     Map<String, String>? extraHeaders,
+    bool useTimeout = true,
   }) async {
     _ensureOpen();
     final headers = _getHeaders();
@@ -229,6 +239,7 @@ class ApiClient {
         headers: headers,
         body: body != null ? jsonEncode(body) : null,
       ),
+      useTimeout: useTimeout,
     );
   }
 
@@ -237,6 +248,7 @@ class ApiClient {
     dynamic body,
     Map<String, String>? queryParameters,
     Map<String, String>? extraHeaders,
+    bool useTimeout = true,
   }) async {
     _ensureOpen();
     final headers = _getHeaders();
@@ -247,6 +259,7 @@ class ApiClient {
         headers: headers,
         body: body != null ? jsonEncode(body) : null,
       ),
+      useTimeout: useTimeout,
     );
   }
 
@@ -254,6 +267,7 @@ class ApiClient {
     String path, {
     Map<String, String>? queryParameters,
     Map<String, String>? extraHeaders,
+    bool useTimeout = true,
   }) async {
     _ensureOpen();
     final headers = _getHeaders();
@@ -263,6 +277,7 @@ class ApiClient {
         _getUri(path, queryParameters: queryParameters),
         headers: headers,
       ),
+      useTimeout: useTimeout,
     );
   }
 
