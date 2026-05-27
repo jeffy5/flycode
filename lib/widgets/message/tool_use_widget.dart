@@ -14,11 +14,15 @@ const double _kToolPanelMaxHeight = 220;
 class ToolUseWidget extends StatefulWidget {
   final ToolPart toolPart;
   final void Function(String sessionId)? onNavigateToSubSession;
+  final bool isExpanded;
+  final ValueChanged<bool>? onExpandedChanged;
 
   const ToolUseWidget({
     super.key,
     required this.toolPart,
     this.onNavigateToSubSession,
+    this.isExpanded = true,
+    this.onExpandedChanged,
   });
 
   @override
@@ -26,9 +30,8 @@ class ToolUseWidget extends StatefulWidget {
 }
 
 class _ToolUseWidgetState extends State<ToolUseWidget> {
-  bool _isExpanded = true;
-
   ToolPart get _part => widget.toolPart;
+  bool get _isExpanded => widget.isExpanded;
 
   bool get _isPending => _part.state is ToolStatePending;
   bool get _isRunning => _part.state is ToolStateRunning;
@@ -272,7 +275,7 @@ class _ToolUseWidgetState extends State<ToolUseWidget> {
       onTap: _canNavigate
           ? () => widget.onNavigateToSubSession!(_subSessionId!)
           : _hasExpandableContent
-          ? () => setState(() => _isExpanded = !_isExpanded)
+          ? () => widget.onExpandedChanged?.call(!_isExpanded)
           : null,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),

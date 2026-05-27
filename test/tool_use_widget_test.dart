@@ -3,6 +3,28 @@ import 'package:flycode/widgets/message/tool_use_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+class _ControlledToolHarness extends StatefulWidget {
+  final ToolPart part;
+
+  const _ControlledToolHarness({required this.part});
+
+  @override
+  State<_ControlledToolHarness> createState() => _ControlledToolHarnessState();
+}
+
+class _ControlledToolHarnessState extends State<_ControlledToolHarness> {
+  bool _isExpanded = true;
+
+  @override
+  Widget build(BuildContext context) {
+    return ToolUseWidget(
+      toolPart: widget.part,
+      isExpanded: _isExpanded,
+      onExpandedChanged: (value) => setState(() => _isExpanded = value),
+    );
+  }
+}
+
 void main() {
   Widget buildHarness(Widget child, {double width = 260}) {
     return MaterialApp(
@@ -125,7 +147,7 @@ void main() {
     );
 
     await tester.pumpWidget(
-      buildHarness(ToolUseWidget(toolPart: part), width: 320),
+      buildHarness(_ControlledToolHarness(part: part), width: 320),
     );
     await tester.pumpAndSettle();
 
