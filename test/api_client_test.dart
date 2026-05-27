@@ -185,9 +185,15 @@ void main() {
   test('request timeout is mapped to retryable ApiException', () async {
     final apiClient = ApiClient(
       baseUrl: 'http://localhost',
+      requestTimeout: const Duration(milliseconds: 1),
       client: _FakeHttpClient(
         onSend: (request) async {
-          throw TimeoutException('slow request');
+          await Future<void>.delayed(const Duration(milliseconds: 10));
+          return http.StreamedResponse(
+            Stream<List<int>>.value(utf8.encode('{}')),
+            200,
+            request: request,
+          );
         },
       ),
     );
@@ -202,6 +208,27 @@ void main() {
     );
 
     await expectLater(apiClient.get('/slow'), matcher);
+  });
+
+  test('post can opt out of the request timeout', () async {
+    final apiClient = ApiClient(
+      baseUrl: 'http://localhost',
+      requestTimeout: const Duration(milliseconds: 1),
+      client: _FakeHttpClient(
+        onSend: (request) async {
+          await Future<void>.delayed(const Duration(milliseconds: 10));
+          return http.StreamedResponse(
+            Stream<List<int>>.value(utf8.encode('{"ok":true}')),
+            200,
+            request: request,
+          );
+        },
+      ),
+    );
+
+    final result = await apiClient.post('/slow', useTimeout: false);
+
+    expect(result, <String, dynamic>{'ok': true});
   });
 
   test('socket exceptions are mapped to retryable network errors', () async {
