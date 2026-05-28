@@ -138,4 +138,36 @@ void main() {
     expect(completedText.style?.decoration, TextDecoration.lineThrough);
     expect(completedY, lessThan(activeY));
   });
+
+  testWidgets('expanded state uses bounded scrollable list for long todos', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      _buildHarness(
+        List<Todo>.generate(
+          16,
+          (index) => _todo(
+            content: '任务 ${index + 1}',
+            status: index == 0 ? 'in_progress' : 'pending',
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final listView = tester.widget<ListView>(
+      find.byKey(const ValueKey('todo-expanded-list')),
+    );
+    final constrainedBox = tester.widget<ConstrainedBox>(
+      find
+          .ancestor(
+            of: find.byKey(const ValueKey('todo-expanded-list')),
+            matching: find.byType(ConstrainedBox),
+          )
+          .first,
+    );
+
+    expect(listView.physics, isNot(isA<NeverScrollableScrollPhysics>()));
+    expect(constrainedBox.constraints.maxHeight, 240);
+  });
 }

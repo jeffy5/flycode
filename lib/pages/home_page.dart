@@ -225,8 +225,6 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
           children: [
             Column(
               children: [
-                if (selectedSession != null)
-                  TodoListWidget(sessionID: selectedSession.id),
                 Expanded(
                   child: ListenableBuilder(
                     listenable: _commandPanelController,
@@ -238,6 +236,18 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                             child: buildBodyContent(),
                           ),
                         ),
+                        if (selectedSession != null)
+                          Positioned(
+                            top: 8,
+                            left: 0,
+                            right: 0,
+                            child: IgnorePointer(
+                              ignoring: _commandPanelController.visible,
+                              child: TodoListWidget(
+                                sessionID: selectedSession.id,
+                              ),
+                            ),
+                          ),
                         Positioned.fill(
                           child: IgnorePointer(
                             ignoring: !_commandPanelController.visible,
