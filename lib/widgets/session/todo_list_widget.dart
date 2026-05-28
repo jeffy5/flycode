@@ -22,6 +22,8 @@ class TodoListWidget extends ConsumerStatefulWidget {
 }
 
 class _TodoListWidgetState extends ConsumerState<TodoListWidget> {
+  static const double _maxExpandedHeight = 240;
+
   bool _expanded = true;
 
   @override
@@ -46,37 +48,59 @@ class _TodoListWidgetState extends ConsumerState<TodoListWidget> {
         .firstOrNull;
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+      margin: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: tokens.card,
+        color: tokens.card.withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _buildHeader(context, todos),
-          if (_expanded) ...[
-            Divider(height: 1, color: tokens.border.withValues(alpha: 0.45)),
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              itemCount: todos.length,
-              separatorBuilder: (_, idx) => Divider(
-                height: 1,
-                indent: 40,
-                color: tokens.border.withValues(alpha: 0.25),
-              ),
-              itemBuilder: (context, index) => _buildTodoItem(todos[index]),
-            ),
-          ] else if (currentTodo != null) ...[
-            Divider(height: 1, color: tokens.border.withValues(alpha: 0.45)),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: _buildTodoItem(currentTodo),
-            ),
-          ],
+        border: Border.all(color: tokens.border.withValues(alpha: 0.18)),
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(context).colorScheme.scrim.withValues(alpha: 0.08),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
         ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildHeader(context, todos),
+            if (_expanded) ...[
+              Divider(height: 1, color: tokens.border.withValues(alpha: 0.45)),
+              ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxHeight: _maxExpandedHeight,
+                ),
+                child: ScrollConfiguration(
+                  behavior: ScrollConfiguration.of(
+                    context,
+                  ).copyWith(scrollbars: false),
+                  child: ListView.separated(
+                    key: const ValueKey('todo-expanded-list'),
+                    shrinkWrap: true,
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    itemCount: todos.length,
+                    separatorBuilder: (_, idx) => Divider(
+                      height: 1,
+                      indent: 40,
+                      color: tokens.border.withValues(alpha: 0.25),
+                    ),
+                    itemBuilder: (context, index) =>
+                        _buildTodoItem(todos[index]),
+                  ),
+                ),
+              ),
+            ] else if (currentTodo != null) ...[
+              Divider(height: 1, color: tokens.border.withValues(alpha: 0.45)),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: _buildTodoItem(currentTodo),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
