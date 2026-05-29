@@ -7,6 +7,7 @@ import '../route_navigation.dart';
 import '../service/api/models/session.dart';
 import '../theme/app_tokens.dart';
 import '../widgets/message/diff_view.dart';
+import '../widgets/message/unified_diff_parser.dart';
 
 // ──────────────────────────────────────────────
 // 页面入口
@@ -234,8 +235,17 @@ class _FileDiffTile extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final tokens = context.tokens;
     final fileName = _fileName(diff.file);
-    final isNewFile = diff.before.isEmpty && diff.after.isNotEmpty;
-    final isDeletedFile = diff.before.isNotEmpty && diff.after.isEmpty;
+    final parsedPatch = diff.patch == null
+        ? null
+        : parseUnifiedDiff(diff.patch!);
+    final isNewFile =
+        diff.status == 'added' ||
+        (parsedPatch?.isNewFile ?? false) ||
+        (diff.before.isEmpty && diff.after.isNotEmpty);
+    final isDeletedFile =
+        diff.status == 'deleted' ||
+        (parsedPatch?.isDeletedFile ?? false) ||
+        (diff.before.isNotEmpty && diff.after.isEmpty);
 
     return Theme(
       // 移除 ExpansionTile 默认顶部分隔线
@@ -338,6 +348,7 @@ class _FileDiffTile extends StatelessWidget {
             child: DiffView(
               before: diff.before,
               after: diff.after,
+              patch: diff.patch,
               fileName: diff.file,
             ),
           ),

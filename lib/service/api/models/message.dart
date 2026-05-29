@@ -108,6 +108,7 @@ class FileDiff {
   final String file;
   final String before;
   final String after;
+  final String? patch;
   final int additions;
   final int deletions;
   final String? status;
@@ -116,6 +117,7 @@ class FileDiff {
     required this.file,
     required this.before,
     required this.after,
+    this.patch,
     required this.additions,
     required this.deletions,
     this.status,
@@ -127,6 +129,7 @@ class FileDiff {
     ),
     before: _stringOrEmpty(json['before']),
     after: _stringOrEmpty(json['after']),
+    patch: json['patch'] as String?,
     additions: _intOrZero(json['additions']),
     deletions: _intOrZero(json['deletions']),
     status: json['status'] as String?,
@@ -135,6 +138,7 @@ class FileDiff {
     'file': file,
     'before': before,
     'after': after,
+    if (patch != null) 'patch': patch,
     'additions': additions,
     'deletions': deletions,
     if (status != null) 'status': status,

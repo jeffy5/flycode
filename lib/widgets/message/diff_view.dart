@@ -2,6 +2,7 @@ import 'package:diff_match_patch/diff_match_patch.dart';
 import 'package:flutter/material.dart';
 
 import '../../theme/app_tokens.dart';
+import 'unified_diff_parser.dart';
 
 // ──────────────────────────────────────────────
 // Diff 渲染器（从 session_diff_page.dart 提取）
@@ -27,6 +28,7 @@ class DiffView extends StatelessWidget {
     super.key,
     required this.before,
     required this.after,
+    this.patch,
     this.fileName,
     this.maxLines = 1000,
     this.maxHeight,
@@ -34,6 +36,7 @@ class DiffView extends StatelessWidget {
 
   final String before;
   final String after;
+  final String? patch;
   final String? fileName;
   final int maxLines;
 
@@ -45,9 +48,19 @@ class DiffView extends StatelessWidget {
 
   /// 检查是否超过最大行数限制
   bool get _isTooLarge {
+    final parsedPatch = _parsedPatch;
+    if (parsedPatch != null) {
+      return parsedPatch.lines.length > maxLines;
+    }
     final beforeLines = before.isEmpty ? 0 : before.split('\n').length;
     final afterLines = after.isEmpty ? 0 : after.split('\n').length;
     return (beforeLines + afterLines) > maxLines;
+  }
+
+  UnifiedDiffParseResult? get _parsedPatch {
+    final value = patch;
+    if (value == null || value.isEmpty) return null;
+    return parseUnifiedDiff(value);
   }
 
   List<DiffLine> _computeDiffLines() {
@@ -138,7 +151,10 @@ class DiffView extends StatelessWidget {
       return _buildTooLargeWidget(context, tokens, theme);
     }
 
-    final lines = _computeDiffLines();
+    final parsedPatch = _parsedPatch;
+    final lines = parsedPatch != null
+        ? _computePatchLines(parsedPatch)
+        : _computeDiffLines();
 
     if (lines.isEmpty) {
       return Container(
@@ -159,7 +175,7 @@ class DiffView extends StatelessWidget {
       );
     }
 
-    final items = _buildDisplayItems(lines);
+    final items = parsedPatch != null ? lines : _buildDisplayItems(lines);
 
     return Container(
       decoration: BoxDecoration(
@@ -207,6 +223,21 @@ class DiffView extends StatelessWidget {
         },
       ),
     );
+  }
+
+  List<DiffLine> _computePatchLines(UnifiedDiffParseResult parsedPatch) {
+    return parsedPatch.lines.map((line) {
+      switch (line.type) {
+        case UnifiedDiffLineType.addition:
+          return DiffLine(op: DIFF_INSERT, text: line.text);
+        case UnifiedDiffLineType.deletion:
+          return DiffLine(op: DIFF_DELETE, text: line.text);
+        case UnifiedDiffLineType.meta:
+          return DiffLine(op: DIFF_EQUAL, text: line.text);
+        case UnifiedDiffLineType.context:
+          return DiffLine(op: DIFF_EQUAL, text: line.text);
+      }
+    }).toList();
   }
 
   Widget _buildTooLargeWidget(
