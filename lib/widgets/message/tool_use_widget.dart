@@ -767,6 +767,7 @@ class _PatchDiffPanel extends StatelessWidget {
         children: files.map((file) {
           final before = file['before']?.toString() ?? '';
           final after = file['after']?.toString() ?? '';
+          final patch = file['patch']?.toString();
           final relativePath = file['relativePath']?.toString();
           final filePath = file['filePath']?.toString();
           final path = (relativePath?.isNotEmpty == true)
@@ -791,6 +792,7 @@ class _PatchDiffPanel extends StatelessWidget {
               DiffView(
                 before: before,
                 after: after,
+                patch: patch,
                 fileName: fileName,
                 maxHeight: _kToolPanelMaxHeight,
               ),
