@@ -478,24 +478,27 @@ class _TextContentViewState extends State<_TextContentView> {
         final contentWidth = math.max(screenWidth, estimatedMaxWidth);
         final scale = _transformCtrl.value.getMaxScaleOnAxis();
 
-        return InteractiveViewer(
-          transformationController: _transformCtrl,
-          minScale: 0.5,
-          maxScale: 3.0,
-          constrained: false,
-          child: SizedBox(
-            width: contentWidth * scale,
-            child: ListView.builder(
-              physics: const NeverScrollableScrollPhysics(),
-              padding: const EdgeInsets.symmetric(vertical: 6),
-              itemCount: lineCount,
-              itemExtent: 22.0 * scale,
-              itemBuilder: (context, index) => _CodeLineRow(
-                lineNumber: index + 1,
-                text: widget.lines[index],
-                gutterWidth: gutterWidth * scale,
-                isEven: index.isEven,
-                scale: scale,
+        return ClipRect(
+          child: InteractiveViewer(
+            transformationController: _transformCtrl,
+            minScale: 0.5,
+            maxScale: 3.0,
+            constrained: false,
+            child: SizedBox(
+              width: contentWidth * scale,
+              height: lineCount * 22.0 * scale + 12,
+              child: ListView.builder(
+                physics: const NeverScrollableScrollPhysics(),
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                itemCount: lineCount,
+                itemExtent: 22.0 * scale,
+                itemBuilder: (context, index) => _CodeLineRow(
+                  lineNumber: index + 1,
+                  text: widget.lines[index],
+                  gutterWidth: gutterWidth * scale,
+                  isEven: index.isEven,
+                  scale: scale,
+                ),
               ),
             ),
           ),

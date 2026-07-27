@@ -56,7 +56,16 @@ class SubSessionPage extends ConsumerWidget {
           }
           return MessageErrorState(message: l10n.messageListLoadFailed);
         },
-        data: (messages) => MessageListView(messages: messages),
+        data: (messages) {
+          final notifier = ref.read(
+            subSessionMessagesProvider(sessionID).notifier,
+          );
+          return MessageListView(
+            messages: messages,
+            hasMore: notifier.hasMore,
+            onLoadMore: () => notifier.loadMore(),
+          );
+        },
       ),
     );
   }

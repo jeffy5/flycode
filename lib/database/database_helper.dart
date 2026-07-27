@@ -4,7 +4,7 @@ import 'package:path/path.dart';
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
   static Database? _database;
-  static const int _dbVersion = 2;
+  static const int _dbVersion = 3;
 
   factory DatabaseHelper() => _instance;
 
@@ -46,6 +46,15 @@ class DatabaseHelper {
         PRIMARY KEY (server_base_url, worktree)
       )
     ''');
+
+    await db.execute('''
+      CREATE TABLE session_cache (
+        session_id TEXT NOT NULL,
+        messages_json TEXT NOT NULL,
+        cached_at INTEGER NOT NULL,
+        PRIMARY KEY (session_id)
+      )
+    ''');
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
@@ -59,5 +68,36 @@ class DatabaseHelper {
         )
       ''');
     }
+    if (oldVersion < 3) {
+      await db.execute('''
+        CREATE TABLE session_cache (
+          session_id TEXT NOT NULL,
+          messages_json TEXT NOT NULL,
+          cached_at INTEGER NOT NULL,
+          PRIMARY KEY (session_id)
+        )
+      ''');
+    }
+  }
+
+  Future<void> saveSessionCache(String sessionId, String messagesJson) async {
+    final db = await database;
+    await db.insert('session_cache', {
+      'session_id': sessionId,
+      'messages_json': messagesJson,
+      'cached_at': DateTime.now().millisecondsSinceEpoch,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  Future<String?> loadSessionCache(String sessionId) async {
+    final db = await database;
+    final rows = await db.query(
+      'session_cache',
+      where: 'session_id = ?',
+      whereArgs: [sessionId],
+      limit: 1,
+    );
+    if (rows.isEmpty) return null;
+    return rows.first['messages_json'] as String;
   }
 }

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../l10n/l10n.dart';
 import '../providers/onboarding_provider.dart';
 import '../providers/server_config_provider.dart';
@@ -10,6 +9,7 @@ import '../service/api/session_api.dart';
 import '../service/api/api_client.dart';
 import '../models/server_config.dart';
 import '../theme/app_tokens.dart';
+import 'project_list_page.dart';
 
 class ServerConfigPage extends ConsumerStatefulWidget {
   final ServerConfig? initialConfig;
@@ -95,17 +95,17 @@ class _ServerConfigPageState extends ConsumerState<ServerConfigPage> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isTesting = true);
+    final client = ApiClient(
+      baseUrl: _baseUrlController.text.trim(),
+      username: _usernameController.text.trim().isEmpty
+          ? null
+          : _usernameController.text.trim(),
+      password: _passwordController.text.isEmpty
+          ? null
+          : _passwordController.text,
+    );
 
     try {
-      final client = ApiClient(
-        baseUrl: _baseUrlController.text.trim(),
-        username: _usernameController.text.trim().isEmpty
-            ? null
-            : _usernameController.text.trim(),
-        password: _passwordController.text.isEmpty
-            ? null
-            : _passwordController.text,
-      );
       await client.get('/global/health');
 
       if (mounted) {
@@ -129,6 +129,7 @@ class _ServerConfigPageState extends ConsumerState<ServerConfigPage> {
         );
       }
     } finally {
+      client.close();
       if (mounted) {
         setState(() => _isTesting = false);
       }
@@ -137,12 +138,6 @@ class _ServerConfigPageState extends ConsumerState<ServerConfigPage> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
-    if (widget.onboardingMode && !_testPassed) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.serverConfigPleaseTestBeforeSave)),
-      );
-      return;
-    }
 
     final config = ServerConfig(
       baseUrl: _baseUrlController.text.trim(),
@@ -157,17 +152,14 @@ class _ServerConfigPageState extends ConsumerState<ServerConfigPage> {
     await ref.read(serverConfigProvider.notifier).save(config);
     await ref.read(onboardingControllerProvider).markServerSetupCompleted();
 
-    ref.invalidate(serverConfigProvider);
-    ref.invalidate(projectsProvider);
-    ref.invalidate(sessionsProvider);
-    ref.invalidate(providerListProvider);
-
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(context.l10n.serverConfigSaveSuccess)),
       );
       if (widget.onboardingMode) {
-        context.go('/');
+        Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const ProjectListPage()));
       }
     }
   }

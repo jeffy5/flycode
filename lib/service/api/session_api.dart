@@ -143,6 +143,7 @@ class SessionApi {
     final List<dynamic> json = await _client.get(
       '/session/$id/message',
       queryParameters: queryParams,
+      timeout: const Duration(seconds: 60),
     );
     return json
         .map((e) => MessageWithParts.fromJson(e as Map<String, dynamic>))

@@ -34,10 +34,16 @@ class MessageList extends ConsumerWidget {
         }
         return MessageErrorState(message: l10n.messageListLoadFailed);
       },
-      data: (messages) => _MessageListBody(
-        messages: messages,
-        onNavigateToSubSession: onNavigateToSubSession,
-      ),
+      data: (messages) {
+        final notifier = ref.read(sessionMessagesProvider(sessionID).notifier);
+        return _MessageListBody(
+          messages: messages,
+          getContentNotifier: notifier.contentNotifier,
+          hasMore: notifier.hasMore,
+          onLoadMore: () => notifier.loadMore(),
+          onNavigateToSubSession: onNavigateToSubSession,
+        );
+      },
     );
   }
 }
@@ -45,6 +51,9 @@ class MessageList extends ConsumerWidget {
 /// 纯消息列表渲染（可复用于子 Session 页面）
 class MessageListView extends StatefulWidget {
   final List<MessageWithParts> messages;
+  final ValueNotifier<MessageWithParts> Function(String)? getContentNotifier;
+  final bool hasMore;
+  final Future<void> Function()? onLoadMore;
   final void Function(String sessionId)? onNavigateToSubSession;
   final double bottomDetachedThreshold;
   final Duration scrollToBottomAnimationDuration;
@@ -52,6 +61,9 @@ class MessageListView extends StatefulWidget {
   const MessageListView({
     super.key,
     required this.messages,
+    this.getContentNotifier,
+    this.hasMore = false,
+    this.onLoadMore,
     this.onNavigateToSubSession,
     this.bottomDetachedThreshold = 72,
     this.scrollToBottomAnimationDuration = const Duration(milliseconds: 220),
@@ -63,13 +75,25 @@ class MessageListView extends StatefulWidget {
 
 class _MessageListBody extends StatelessWidget {
   final List<MessageWithParts> messages;
+  final ValueNotifier<MessageWithParts> Function(String)? getContentNotifier;
+  final bool hasMore;
+  final Future<void> Function()? onLoadMore;
   final void Function(String sessionId)? onNavigateToSubSession;
 
-  const _MessageListBody({required this.messages, this.onNavigateToSubSession});
+  const _MessageListBody({
+    required this.messages,
+    this.getContentNotifier,
+    this.hasMore = false,
+    this.onLoadMore,
+    this.onNavigateToSubSession,
+  });
 
   @override
   Widget build(BuildContext context) => MessageListView(
     messages: messages,
+    getContentNotifier: getContentNotifier,
+    hasMore: hasMore,
+    onLoadMore: onLoadMore,
     onNavigateToSubSession: onNavigateToSubSession,
   );
 }
@@ -89,10 +113,14 @@ class _MessageListViewState extends State<MessageListView> {
   List<MessageWithParts>? _frozenMessages;
   _PendingScrollAction _pendingScrollAction = _PendingScrollAction.none;
   bool _scrollActionScheduled = false;
+  bool _isLoadingMore = false;
+
+  int _lastMessageCount = 0;
 
   @override
   void initState() {
     super.initState();
+    _lastMessageCount = widget.messages.length;
     _requestScrollAction(_PendingScrollAction.jumpToBottom);
   }
 
@@ -100,6 +128,19 @@ class _MessageListViewState extends State<MessageListView> {
   void didUpdateWidget(covariant MessageListView oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (!_scrollController.hasClients) return;
+
+    final oldLen = oldWidget.messages.length;
+    final newLen = widget.messages.length;
+
+    // 结构未变（无增删消息），只是流式内容更新，无需计算签名
+    if (oldLen == newLen && oldLen == _lastMessageCount) return;
+
+    _lastMessageCount = newLen;
+
+    // 加载更多或后台刷新：更新冻结列表，不影响滚动位置
+    if (oldLen != newLen && _isDetachedFromBottom) {
+      _frozenMessages = null; // 解除冻结，build 会用 widget.messages
+    }
 
     if (_isDetachedFromBottom &&
         _messageListSignature(oldWidget.messages) !=
@@ -134,6 +175,17 @@ class _MessageListViewState extends State<MessageListView> {
           _distanceFromBottom() <= widget.bottomDetachedThreshold) {
         _reattachToBottom();
         return false;
+      }
+
+      // 滑到顶部自动加载更早消息
+      if (widget.hasMore && widget.onLoadMore != null && !_isLoadingMore) {
+        final pos = _scrollController.position;
+        if (pos.pixels >= pos.maxScrollExtent - 80) {
+          _isLoadingMore = true;
+          widget.onLoadMore!().then((_) {
+            _isLoadingMore = false;
+          });
+        }
       }
     }
 
@@ -294,6 +346,7 @@ class _MessageListViewState extends State<MessageListView> {
     }
 
     final tokens = context.tokens;
+    final itemCount = visibleMessages.length;
 
     return Stack(
       children: [
@@ -303,8 +356,9 @@ class _MessageListViewState extends State<MessageListView> {
             key: listViewKey,
             controller: _scrollController,
             reverse: true,
+            cacheExtent: 500,
             padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-            itemCount: visibleMessages.length,
+            itemCount: itemCount,
             itemBuilder: (context, index) {
               final messageWithParts =
                   visibleMessages[visibleMessages.length - 1 - index];
@@ -314,8 +368,25 @@ class _MessageListViewState extends State<MessageListView> {
                   : null;
               final prevIsUser = prevMessage?.info is UserMessage;
 
+              final msgId = _messageId(messageWithParts);
+              final getNotifier = widget.getContentNotifier;
+
+              if (getNotifier != null) {
+                final contentNotifier = getNotifier(msgId);
+                return ValueListenableBuilder<MessageWithParts>(
+                  valueListenable: contentNotifier,
+                  builder: (context, liveMessage, child) => MessageBubble(
+                    key: ValueKey(msgId),
+                    messageWithParts: liveMessage,
+                    prevIsUser: prevIsUser,
+                    isLatestMessage: index == 0,
+                    onNavigateToSubSession: widget.onNavigateToSubSession,
+                  ),
+                );
+              }
+
               return MessageBubble(
-                key: ValueKey(_messageId(messageWithParts)),
+                key: ValueKey(msgId),
                 messageWithParts: messageWithParts,
                 prevIsUser: prevIsUser,
                 isLatestMessage: index == 0,
@@ -394,33 +465,45 @@ bool _didBottomAffectingContentChange(
   List<MessageWithParts> previous,
   List<MessageWithParts> next,
 ) {
-  final previousVisible = previous
-      .where((message) => !_isSyntheticOnlyUserMessage(message))
-      .toList();
-  final nextVisible = next
-      .where((message) => !_isSyntheticOnlyUserMessage(message))
-      .toList();
+  // 只找最后一个可见消息，避免全量过滤
+  MessageWithParts? lastPrev;
+  MessageWithParts? lastNext;
+  int prevCount = 0;
+  int nextCount = 0;
 
-  if (previousVisible.length != nextVisible.length) {
-    return true;
+  for (final m in previous.reversed) {
+    if (!_isSyntheticOnlyUserMessage(m)) {
+      if (lastPrev == null) lastPrev = m;
+      prevCount++;
+    }
   }
-  if (previousVisible.isEmpty || nextVisible.isEmpty) {
-    return false;
+  for (final m in next.reversed) {
+    if (!_isSyntheticOnlyUserMessage(m)) {
+      if (lastNext == null) lastNext = m;
+      nextCount++;
+    }
   }
 
-  return _bottomAnchorSignature(previousVisible.last) !=
-      _bottomAnchorSignature(nextVisible.last);
+  if (prevCount != nextCount) return true;
+  if (lastPrev == null || lastNext == null) return false;
+
+  return _bottomAnchorSignature(lastPrev) != _bottomAnchorSignature(lastNext);
 }
 
 String _messageListSignature(List<MessageWithParts> messages) {
-  final visibleMessages = messages
-      .where((message) => !_isSyntheticOnlyUserMessage(message))
-      .toList();
-  if (visibleMessages.isEmpty) {
-    return 'empty';
+  // 只需要第一个和最后一个可见消息的签名（用于判断是否冻结视图）
+  MessageWithParts? firstVis;
+  MessageWithParts? lastVis;
+  int count = 0;
+  for (final m in messages) {
+    if (_isSyntheticOnlyUserMessage(m)) continue;
+    count++;
+    lastVis = m;
+    if (firstVis == null) firstVis = m;
   }
+  if (firstVis == null) return 'empty';
 
-  return '${visibleMessages.length}:${_messageId(visibleMessages.first)}:${_bottomAnchorSignature(visibleMessages.last)}';
+  return '$count:${_messageId(firstVis)}:${_bottomAnchorSignature(lastVis!)}';
 }
 
 String _bottomAnchorSignature(MessageWithParts message) {

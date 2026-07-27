@@ -81,7 +81,7 @@ class _TypewriterMarkdownText extends StatefulWidget {
 }
 
 class _TypewriterMarkdownTextState extends State<_TypewriterMarkdownText> {
-  static const Duration _tick = Duration(milliseconds: 24);
+  static const Duration _tick = Duration(milliseconds: 100);
   static const Duration _streamingLag = Duration(milliseconds: 320);
 
   Timer? _timer;
