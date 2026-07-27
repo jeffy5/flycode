@@ -7,6 +7,7 @@ const String sessionDiffRoutePath = '/diff';
 const String fileContentRoutePath = '/file';
 const String subSessionRoutePath = '/sub-session';
 const String sessionContextRoutePath = '/session-context';
+const String fileBrowserRoutePath = '/files';
 
 extension AppRouteNavigation on BuildContext {
   Future<T?> pushSessionDiff<T>(SessionDiffRouteArgs args) {
@@ -39,5 +40,9 @@ extension AppRouteNavigation on BuildContext {
 
   Future<T?> pushSessionContextById<T>(String sessionID) {
     return pushSessionContext<T>(SessionContextRouteArgs(sessionID: sessionID));
+  }
+
+  Future<T?> pushFileBrowser<T>(FileBrowserRouteArgs args) {
+    return push<T>(fileBrowserRoutePath, extra: args);
   }
 }

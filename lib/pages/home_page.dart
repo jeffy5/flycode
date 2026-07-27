@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 
 import '../l10n/l10n.dart';
 import '../models/chat_route_args.dart';
+import '../models/typed_route_args.dart';
 import '../providers/chat_view_state_provider.dart';
 import '../providers/current_directory_provider.dart';
 import '../providers/home_page_provider.dart';
@@ -193,6 +194,15 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
           titleSpacing: 4,
           title: title == null ? null : Text(title),
           actions: [
+            if (currentDirectory != null)
+              _HeaderActionButton(
+                icon: Icons.folder_open_rounded,
+                tooltip: '文件浏览器',
+                onTap: () => context.pushFileBrowser(
+                  FileBrowserRouteArgs(directory: currentDirectory),
+                ),
+              ),
+            if (currentDirectory != null) const SizedBox(width: 4),
             if (selectedSession != null) ...[
               _HeaderActionButton(
                 icon: Icons.difference_outlined,

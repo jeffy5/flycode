@@ -6,6 +6,7 @@ import 'models/chat_route_args.dart';
 import 'models/typed_route_args.dart';
 import 'pages/app_entry_page.dart';
 import 'pages/about_page.dart';
+import 'pages/file_browser_page.dart';
 import 'pages/file_content_page.dart';
 import 'pages/home_page.dart';
 import 'pages/language_page.dart';
@@ -110,6 +111,14 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) {
         final args = state.extra as SessionContextRouteArgs;
         return SessionContextPage(sessionID: args.sessionID);
+      },
+    ),
+    GoRoute(
+      path: fileBrowserRoutePath,
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) {
+        final args = state.extra as FileBrowserRouteArgs;
+        return FileBrowserPage(directory: args.directory);
       },
     ),
   ],
