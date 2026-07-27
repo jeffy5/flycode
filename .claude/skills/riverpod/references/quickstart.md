@@ -1,0 +1,127 @@
+# Quickstart | Riverpod
+
+This section is designed for people familiar with the [Provider](https://pub.dev/packages/provider) package who wants to learn about Riverpod.
+
+Before anything, read the short [getting started](/docs/introduction/getting_started) article and try out the small [sandbox](https://dartpad.dev/?null_safety=true&id=ef06ab3ce0b822e6cc5db0575248e6e2) example to test Riverpod's features out. If you like what you see there, you should then definitively consider a migration.
+
+Indeed, migrating from Provider to Riverpod can be very straightforward.  
+Migrating basically consists in a few steps that can be done in an *incremental* way.
+
+## Start with `ChangeNotifierProvider`
+
+It's fine to keep using `ChangeNotifier` while transitioning towards Riverpod, and not use its latest fancy features ASAP.
+
+Indeed, the following is perfectly fine to start with:
+
+```dart
+// If you have this...
+class MyNotifier extends ChangeNotifier {
+  int state = 0;
+
+  void increment() {
+    state++;
+    notifyListeners();
+  }
+}
+
+// ... just add this!
+final myNotifierProvider = ChangeNotifierProvider<MyNotifier>((ref) {
+  return MyNotifier();
+});
+```
+
+As you can see Riverpod exposes a [ChangeNotifierProvider](https://pub.dev/documentation/hooks_riverpod/latest/legacy/ChangeNotifierProvider-class.html) class, which is there precisely to support migrations from pkg:Provider.
+
+Keep in mind that this provider is not recommended when writing new code, and it is not the best way to use Riverpod, but it's a gentle and very easy way to start your migration.
+
+> There is no rush to *immediately* try to change your `ChangeNotifier`s into the more modern [Notifiers](https://pub.dev/documentation/hooks_riverpod/latest/hooks_riverpod/NotifierProvider-class.html).
+> Some require a bit of a paradigm shift, so it may be difficult to do initially.  
+> Take your time, as it is important to get yourself familiar with Riverpod first; you'll quickly find out that *almost* all Providers from pkg:provider have a strict equivalent in pkg:riverpod.
+
+## Start with *leaves*
+
+Start with Providers that do not depend on anything else, i.e. start with the *leaves* in your dependency tree.
+Once you have migrated all of the leaves, you can then move on to the providers that depend on leaves.
+
+In other words, avoid migrating `ProxyProvider`s at first; tackle them once all of their dependencies have been migrated.
+
+This should boost and simplify the migration process, while also minimizing / tracking down any errors.
+
+## Riverpod and Provider can coexist
+
+*Keep in mind that it is entirely possible to use both Provider and Riverpod at the same time.*
+
+Indeed, using import aliases, it is possible to use the two APIs altogether.
+This is also great for readability and it removes any ambiguous API usage.
+
+If you plan on doing this, consider using import aliases for each Provider import in your codebase.
+
+> A full guide onto how to effectively implement import aliases is incoming soon.
+
+## Migrate one Provider at a time
+
+If you have an existing app, don't try to migrate all your providers at once!
+
+While you should strive toward moving all your application to Riverpod in the long-run, **don't burn yourself out**.
+Do it one provider at a time.  
+
+Take the above example. **Fully** migrating that `myNotifierProvider` to Riverpod means writing the following:
+
+```dart
+class MyNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  void increment() => state++;
+}
+
+final myNotifierProvider = NotifierProvider<MyNotifier, int>(MyNotifier.new);
+```
+
+.. and it's *also* needed to change how that provider is consumed, i.e. writing `ref.watch` in the place of each `context.watch` for this provider.
+
+This operation might take some time and might lead to some errors, so don't rush doing this all at once.
+
+## Migrating `ProxyProvider`s
+
+Within pkg:Provider, `ProxyProvider` is used to combine values from other Providers; its build depends on the value of other providers, reactively.
+
+With Riverpod, instead, Providers [are composable by default](/docs/from_provider/motivation#combining-providers-is-hard-and-error-prone); therefore, when migrating a `ProxyProvider` you'll simply need to write `ref.watch` if you want to declare a direct dependency from a Provider to another.
+
+If anything, combining values with Riverpod should feel simpler and straightforward; thus, the migration should greatly simplify your code.
+
+Furthermore, there are no shenanigans about combining more than two providers together: just add another `ref.watch` and you'll be good to go.
+
+## Eager initialization
+
+Since Notifiers are final global variables, they are lazy by default.
+
+If you need to initialize some warm-up data or a useful service on startup, the best way to do it is to first read your provider in the place where you used to put `MultiProvider`.
+
+In other words, since Riverpod can't be forced to be eager initialized, they can be read and cached in your startup phase, so that they're warm and ready when needed inside the rest of your application.
+
+A full guide about eager initialization of pkg:Notifiers [is available here](/docs/how_to/eager_initialization).
+
+## Code Generation
+
+[Code generation](/docs/concepts/about_code_generation) is recommended to use Riverpod the *future-proof* way.
+As a side note, chances are that when metaprogramming will be a thing, codegen will be default for Riverpod.
+
+Unluckily, `@riverpod` can't generate code for `ChangeNotifierProvider`.
+To overcome this, you can use the following utility extension method:
+
+```dart
+extension ChangeNotifierWithCodeGenExtension<T extends ChangeNotifier> on Ref {
+  T listenAndDisposeChangeNotifier(T notifier) {
+    onDispose(notifier.dispose);
+    return notifier;
+  }
+}
+```
+
+If you have migrated all your `ChangeNotifier`s to `Notifier`s in your codebase, you can get rid of the temporary extension definitively.
+
+Keep in mind that, while being recommended, codegen is not *mandatory*.
+It's good to reason about migrations incrementally: if you feel like that implementing this migration *while* transitioning to the code generation syntax in one single take might be too much, *that's fine*.
+
+Following this guide, you *can* migrate towards codegen as a further step forward, later on.

@@ -1,0 +1,417 @@
+{
+  "@@locale": "en",
+  "appTitle": "FlyCode",
+  "chatTitle": "Session",
+  "languageTitle": "Language",
+  "languageFollowSystem": "Follow system",
+  "languageSimplifiedChinese": "Simplified Chinese",
+  "languageEnglish": "English",
+  "settingsTitle": "Settings",
+  "settingsSectionGeneral": "General",
+  "settingsLanguage": "Language",
+  "settingsTheme": "Theme",
+  "settingsSessionCompletionNotification": "Notification",
+  "settingsSectionConnectionModel": "Connection & Models",
+  "settingsServer": "Server",
+  "settingsModel": "Models",
+  "settingsSectionMore": "More",
+  "settingsAbout": "About",
+  "themeModeTitle": "Theme",
+  "themeModeSystem": "System",
+  "themeModeLight": "Light",
+  "themeModeDark": "Dark",
+  "sessionCompletionNotificationTitle": "Notification",
+  "sessionCompletionNotificationDescription": "Choose when to receive notifications after a session is completed.",
+  "sessionCompletionNotificationModeNone": "Never",
+  "sessionCompletionNotificationModeBackgroundOnly": "Only when app is in background",
+  "sessionCompletionNotificationModeAlways": "Also when app is in foreground",
+  "mainTabProjects": "PROJECTS",
+  "mainTabSettings": "SETTINGS",
+  "serverConfigConnectServer": "Connect Server",
+  "serverConfigTitle": "Server Configuration",
+  "serverConfigOnboardingHint": "Please connect to a server on first launch. We recommend testing the connection before saving.",
+  "serverConfigServerAddress": "Server URL",
+  "serverConfigServerAddressHint": "http://127.0.0.1:4096",
+  "serverConfigUsernameOptional": "Username (optional)",
+  "serverConfigPasswordOptional": "Password (optional)",
+  "serverConfigPleaseTestBeforeSave": "Please test the connection successfully before saving.",
+  "serverConfigConnectionSuccess": "Connection successful",
+  "serverConfigSaveSuccess": "Saved",
+  "serverConfigTesting": "Testing...",
+  "serverConfigTestConnection": "Test Connection",
+  "serverConfigSaveAndEnter": "Save & Continue",
+  "serverConfigSave": "Save",
+  "serverConfigValidationServerRequired": "Please enter server URL",
+  "serverConfigValidationServerInvalid": "Please enter a valid server URL",
+  "serverConfigErrorAuthFailed": "Authentication failed. Please check your username or password.",
+  "serverConfigErrorServer": "Server error ({statusCode}), please try again later.",
+  "@serverConfigErrorServer": {
+    "placeholders": {
+      "statusCode": {
+        "type": "int"
+      }
+    }
+  },
+  "serverConfigErrorRequestFailed": "Request failed ({statusCode}): {message}",
+  "@serverConfigErrorRequestFailed": {
+    "placeholders": {
+      "statusCode": {
+        "type": "int"
+      },
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "serverConfigErrorCannotConnect": "Unable to connect to server. Please check URL and network.",
+  "serverConfigErrorNetworkRequestFailed": "Network request failed. Please check server URL.",
+  "serverConfigErrorFormat": "Invalid server URL format",
+  "serverConfigErrorConnectionFailed": "Connection failed. Please check server configuration.",
+  "aboutTitle": "About",
+  "aboutHeroDescription": "Keep coding within reach. Continue your projects and conversations from your phone.",
+  "aboutSectionProductInfo": "Product",
+  "aboutOfficialWebsite": "Website",
+  "aboutSectionLegalSupport": "Legal & Support",
+  "aboutCurrentVersion": "Version",
+  "aboutPrivacyPolicy": "Privacy Policy",
+  "aboutOpenSourceLicenses": "Open Source Licenses",
+  "aboutOpenLinkFailed": "Unable to open link right now",
+  "projectListHeader": "Projects",
+  "projectListNew": "+ New",
+  "projectListLoadFailedTitle": "Unable to load projects",
+  "projectListGoConfigureServer": "Configure server",
+  "projectListRetryLoad": "Retry",
+  "projectListEmpty": "No projects",
+  "projectListPleaseAddProject": "Please add a project first",
+  "projectListCheckServerConfig": "Check server configuration",
+  "projectListActionPin": "Pin",
+  "projectListActionUnpin": "Unpin",
+  "projectListUpdatedJustNow": "Just now",
+  "projectListUpdatedMinutesAgo": "{count} min ago",
+  "@projectListUpdatedMinutesAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "projectListUpdatedHoursAgo": "{count} h ago",
+  "@projectListUpdatedHoursAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "projectListUpdatedDaysAgo": "{count} d ago",
+  "@projectListUpdatedDaysAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "projectListErrorAuthFailed": "Authentication failed. Please check server credentials.",
+  "projectListErrorServerUnavailable": "Server temporarily unavailable ({statusCode}).",
+  "@projectListErrorServerUnavailable": {
+    "placeholders": {
+      "statusCode": {
+        "type": "int"
+      }
+    }
+  },
+  "projectListErrorRequestFailed": "Request failed ({statusCode}): {message}",
+  "@projectListErrorRequestFailed": {
+    "placeholders": {
+      "statusCode": {
+        "type": "int"
+      },
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "projectListErrorCannotConnect": "Unable to connect to server. Please check URL or network.",
+  "projectListErrorLoadFailed": "Failed to load projects. Please check server configuration.",
+  "homeNewSessionTitle": "Start a new session",
+  "homeNewSessionSubtitle": "Type a message below. A session will be created automatically after sending.",
+  "homeTooltipFileDiff": "File changes",
+  "homeTooltipContext": "Context",
+  "homeNoSession": "No sessions",
+  "homeSelectSession": "Select a session",
+  "messageListLoadFailed": "Failed to load messages. Please try again later.",
+  "modelConfigTitle": "Model Configuration",
+  "modelConfigRefreshed": "Model list refreshed",
+  "modelConfigRefreshFailed": "Refresh failed: {error}",
+  "@modelConfigRefreshFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "modelConfigLoadFailed": "Failed to load model list: {error}",
+  "@modelConfigLoadFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "modelConfigSearchHint": "Search provider or model",
+  "modelConfigNoProvider": "No available providers",
+  "modelConfigNoMatch": "No matching provider or model",
+  "modelConfigLoadConfigFailed": "Failed to load config: {error}",
+  "@modelConfigLoadConfigFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "modelConfigBatchUpdateFailed": "Batch update failed: {error}",
+  "@modelConfigBatchUpdateFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "modelConfigUpdateFailed": "Update failed: {error}",
+  "@modelConfigUpdateFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "commonAll": "All",
+  "commonFavorite": "Favorite",
+  "sessionContextTitle": "Context",
+  "sessionContextLoadFailed": "Load failed: {error}",
+  "@sessionContextLoadFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "sessionContextUsed": "Used",
+  "sessionContextTotalTokens": "Total Tokens",
+  "sessionContextLimit": "Context Limit",
+  "sessionContextTotalCost": "Total Cost",
+  "sessionContextInfoTitle": "Session Info",
+  "sessionContextProvider": "Provider",
+  "sessionContextModel": "Model",
+  "sessionContextUserMessages": "User Messages",
+  "sessionContextAssistantMessages": "Assistant Messages",
+  "sessionContextCreatedAt": "Created At",
+  "sessionContextLastActive": "Last Active",
+  "sessionDiffTitle": "File Changes",
+  "sessionDiffLoadFailed": "Load failed",
+  "sessionDiffEmptyTitle": "No file changes",
+  "sessionDiffEmptySubtitle": "No file changes were produced in this session",
+  "sessionDiffFilesCount": "{count} files",
+  "@sessionDiffFilesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sessionDiffViewFileContent": "View file content",
+  "sessionDiffEmptyFile": "(empty file)",
+  "sessionDiffCollapsedLines": "-- {count} unchanged lines --",
+  "@sessionDiffCollapsedLines": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "fileContentCopyTooltip": "Copy content",
+  "fileContentCopied": "Copied to clipboard",
+  "fileContentLoadFailed": "Load failed",
+  "fileContentLines": "{count} lines",
+  "@fileContentLines": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "fileContentPreviewUnsupported": "Preview is not available for this file",
+  "fileContentBinary": "Binary file",
+  "fileContentBinaryWithMime": "Binary file ({mimeType})",
+  "@fileContentBinaryWithMime": {
+    "placeholders": {
+      "mimeType": {
+        "type": "String"
+      }
+    }
+  },
+  "openProjectTitle": "Open Project",
+  "openProjectInputHint": "Enter directory name or path (e.g. ~/projects)",
+  "openProjectErrorResolveHome": "Unable to resolve home directory",
+  "openProjectErrorOpenFailed": "Failed to open project: {error}",
+  "@openProjectErrorOpenFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "openProjectPlaceholderSearch": "Search by directory name",
+  "openProjectPlaceholderPathSupport": "Path navigation supported: ~/projects/myapp",
+  "openProjectNoMatch": "No matching directories",
+  "chatInputPickImageFailed": "Failed to select images: {error}",
+  "@chatInputPickImageFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "chatInputAbortFailed": "Abort failed: {error}",
+  "@chatInputAbortFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "chatInputSendError": "Error: {error}",
+  "@chatInputSendError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "chatInputShellHint": "Type a shell command...",
+  "chatInputAskHint": "Ask anything...",
+  "chatInputSessionHistory": "Session History",
+  "chatInputNoSessions": "No sessions",
+  "chatInputToday": "Today",
+  "chatInputYesterday": "Yesterday",
+  "chatInputMonthDay": "{month}/{day}",
+  "@chatInputMonthDay": {
+    "placeholders": {
+      "month": {
+        "type": "int"
+      },
+      "day": {
+        "type": "int"
+      }
+    }
+  },
+  "chatInputJustNow": "Just now",
+  "chatInputMinutesAgo": "{count} min ago",
+  "@chatInputMinutesAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chatInputHoursAgo": "{count} h ago",
+  "@chatInputHoursAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chatInputDaysAgo": "{count} d ago",
+  "@chatInputDaysAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chatInputSelectVariant": "Select Variant",
+  "chatInputSelectAgent": "Select Agent",
+  "questionCardSelectOneOrMore": "Select one or more answers",
+  "questionCardSelectOne": "Select one answer",
+  "questionCardIgnore": "Ignore",
+  "questionCardPrevious": "Previous",
+  "questionCardSubmit": "Submit",
+  "questionCardNext": "Next",
+  "questionCardCustomAnswerHint": "Type your answer...",
+  "permissionDockTitle": "Permission Request",
+  "permissionDockDeny": "Deny",
+  "permissionDockAllowAlways": "Allow always",
+  "permissionDockAllowOnce": "Allow once",
+  "permissionDockReplyFailed": "Permission reply failed: {error}",
+  "@permissionDockReplyFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "modelSelectionTitle": "Select Model",
+  "modelSelectionSearchHint": "Search models",
+  "modelSelectionConfigLoadFailed": "Config load failed: {error}",
+  "@modelSelectionConfigLoadFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "modelSelectionListLoadFailed": "Model list load failed: {error}",
+  "@modelSelectionListLoadFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "modelSelectionNoConnectedProviders": "No connected model providers",
+  "modelSelectionNoModels": "No available models",
+  "modelSelectionNoMatchedModels": "No matching models",
+  "modelSelectionNoModelsUnderProvider": "No available models under this provider",
+  "modelSelectionFavorited": "Favorited",
+  "messageCopy": "Copy",
+  "messageCopied": "Copied",
+  "todoPanelTitle": "AI Task Plan",
+  "todoBadgeInProgress": "{count} in progress",
+  "@todoBadgeInProgress": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "todoBadgePending": "{count} pending",
+  "@todoBadgePending": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "todoBadgeCompleted": "{count} completed",
+  "@todoBadgeCompleted": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "todoPriorityHigh": "High",
+  "todoPriorityMedium": "Medium",
+  "todoPriorityLow": "Low",
+  "sessionCompletedNotificationTitle": "Session completed",
+  "sessionCompletedNotificationBodyWithTitle": "{title} has completed",
+  "@sessionCompletedNotificationBodyWithTitle": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "sessionCompletedNotificationBodyWithoutTitle": "A session has completed"
+}

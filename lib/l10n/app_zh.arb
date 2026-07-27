@@ -1,0 +1,417 @@
+{
+  "@@locale": "zh",
+  "appTitle": "FlyCode",
+  "chatTitle": "会话",
+  "languageTitle": "语言",
+  "languageFollowSystem": "跟随系统",
+  "languageSimplifiedChinese": "简体中文",
+  "languageEnglish": "English",
+  "settingsTitle": "设置",
+  "settingsSectionGeneral": "通用设置",
+  "settingsLanguage": "语言",
+  "settingsTheme": "色彩主题",
+  "settingsSessionCompletionNotification": "通知",
+  "settingsSectionConnectionModel": "连接与模型",
+  "settingsServer": "服务器",
+  "settingsModel": "模型",
+  "settingsSectionMore": "更多",
+  "settingsAbout": "关于",
+  "themeModeTitle": "色彩主题",
+  "themeModeSystem": "跟随系统",
+  "themeModeLight": "浅色",
+  "themeModeDark": "深色",
+  "sessionCompletionNotificationTitle": "通知",
+  "sessionCompletionNotificationDescription": "设置会话完成后何时向你发送通知。",
+  "sessionCompletionNotificationModeNone": "不发送通知",
+  "sessionCompletionNotificationModeBackgroundOnly": "应用在后台时发送通知",
+  "sessionCompletionNotificationModeAlways": "应用在前台时也发送通知",
+  "mainTabProjects": "项目",
+  "mainTabSettings": "设置",
+  "serverConfigConnectServer": "连接服务器",
+  "serverConfigTitle": "服务器配置",
+  "serverConfigOnboardingHint": "首次使用请先连接服务器。建议先点击“测试连接”，再保存进入首页。",
+  "serverConfigServerAddress": "服务器地址",
+  "serverConfigServerAddressHint": "http://127.0.0.1:4096",
+  "serverConfigUsernameOptional": "用户名（可选）",
+  "serverConfigPasswordOptional": "密码（可选）",
+  "serverConfigPleaseTestBeforeSave": "请先测试连接并成功后再保存",
+  "serverConfigConnectionSuccess": "连接成功",
+  "serverConfigSaveSuccess": "保存成功",
+  "serverConfigTesting": "测试中...",
+  "serverConfigTestConnection": "测试连接",
+  "serverConfigSaveAndEnter": "保存并进入",
+  "serverConfigSave": "保存",
+  "serverConfigValidationServerRequired": "请输入服务器地址",
+  "serverConfigValidationServerInvalid": "请输入有效的服务器地址",
+  "serverConfigErrorAuthFailed": "认证失败，请检查用户名或密码",
+  "serverConfigErrorServer": "服务器异常（{statusCode}），请稍后重试",
+  "@serverConfigErrorServer": {
+    "placeholders": {
+      "statusCode": {
+        "type": "int"
+      }
+    }
+  },
+  "serverConfigErrorRequestFailed": "请求失败（{statusCode}）：{message}",
+  "@serverConfigErrorRequestFailed": {
+    "placeholders": {
+      "statusCode": {
+        "type": "int"
+      },
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "serverConfigErrorCannotConnect": "无法连接到服务器，请检查地址和网络",
+  "serverConfigErrorNetworkRequestFailed": "网络请求失败，请检查服务器地址",
+  "serverConfigErrorFormat": "服务器地址格式不正确",
+  "serverConfigErrorConnectionFailed": "连接失败，请检查服务器配置",
+  "aboutTitle": "关于",
+  "aboutHeroDescription": "让 coding 随时发生。你可以在手机上继续项目、衔接会话与灵感。",
+  "aboutSectionProductInfo": "产品信息",
+  "aboutOfficialWebsite": "官网",
+  "aboutSectionLegalSupport": "法律与支持",
+  "aboutCurrentVersion": "当前版本",
+  "aboutPrivacyPolicy": "隐私政策",
+  "aboutOpenSourceLicenses": "开源许可",
+  "aboutOpenLinkFailed": "暂时无法打开链接",
+  "projectListHeader": "项目",
+  "projectListNew": "+ 新建",
+  "projectListLoadFailedTitle": "暂时无法加载项目",
+  "projectListGoConfigureServer": "去配置服务器",
+  "projectListRetryLoad": "重试加载",
+  "projectListEmpty": "暂无项目",
+  "projectListPleaseAddProject": "请先添加一个项目",
+  "projectListCheckServerConfig": "检查服务器配置",
+  "projectListActionPin": "置顶",
+  "projectListActionUnpin": "取消置顶",
+  "projectListUpdatedJustNow": "刚刚",
+  "projectListUpdatedMinutesAgo": "{count} 分钟前",
+  "@projectListUpdatedMinutesAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "projectListUpdatedHoursAgo": "{count} 小时前",
+  "@projectListUpdatedHoursAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "projectListUpdatedDaysAgo": "{count} 天前",
+  "@projectListUpdatedDaysAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "projectListErrorAuthFailed": "认证失败，请检查服务器账号和密码。",
+  "projectListErrorServerUnavailable": "服务器暂时不可用（{statusCode}）。",
+  "@projectListErrorServerUnavailable": {
+    "placeholders": {
+      "statusCode": {
+        "type": "int"
+      }
+    }
+  },
+  "projectListErrorRequestFailed": "请求失败（{statusCode}）：{message}",
+  "@projectListErrorRequestFailed": {
+    "placeholders": {
+      "statusCode": {
+        "type": "int"
+      },
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "projectListErrorCannotConnect": "无法连接到服务器，请检查地址或网络。",
+  "projectListErrorLoadFailed": "加载项目失败，请检查服务器配置。",
+  "homeNewSessionTitle": "开始一段新会话",
+  "homeNewSessionSubtitle": "在下方输入消息，发送后将自动创建会话",
+  "homeTooltipFileDiff": "文件变更",
+  "homeTooltipContext": "上下文",
+  "homeNoSession": "暂无会话",
+  "homeSelectSession": "请选择一个会话",
+  "messageListLoadFailed": "消息加载失败，请稍后重试",
+  "modelConfigTitle": "模型配置",
+  "modelConfigRefreshed": "模型列表已刷新",
+  "modelConfigRefreshFailed": "刷新失败: {error}",
+  "@modelConfigRefreshFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "modelConfigLoadFailed": "加载模型列表失败: {error}",
+  "@modelConfigLoadFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "modelConfigSearchHint": "搜索 Provider 或模型",
+  "modelConfigNoProvider": "当前没有可用的 Provider",
+  "modelConfigNoMatch": "没有匹配的 Provider 或模型",
+  "modelConfigLoadConfigFailed": "加载配置失败: {error}",
+  "@modelConfigLoadConfigFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "modelConfigBatchUpdateFailed": "批量更新失败: {error}",
+  "@modelConfigBatchUpdateFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "modelConfigUpdateFailed": "更新失败: {error}",
+  "@modelConfigUpdateFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "commonAll": "全部",
+  "commonFavorite": "收藏",
+  "sessionContextTitle": "上下文",
+  "sessionContextLoadFailed": "加载失败: {error}",
+  "@sessionContextLoadFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "sessionContextUsed": "已使用",
+  "sessionContextTotalTokens": "总 Token",
+  "sessionContextLimit": "上下文限制",
+  "sessionContextTotalCost": "总费用",
+  "sessionContextInfoTitle": "会话信息",
+  "sessionContextProvider": "提供商",
+  "sessionContextModel": "模型",
+  "sessionContextUserMessages": "用户消息",
+  "sessionContextAssistantMessages": "助手消息",
+  "sessionContextCreatedAt": "创建时间",
+  "sessionContextLastActive": "最后活动",
+  "sessionDiffTitle": "文件变更",
+  "sessionDiffLoadFailed": "加载失败",
+  "sessionDiffEmptyTitle": "暂无文件变更",
+  "sessionDiffEmptySubtitle": "本次会话未产生任何文件改动",
+  "sessionDiffFilesCount": "{count} 个文件",
+  "@sessionDiffFilesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sessionDiffViewFileContent": "查看文件内容",
+  "sessionDiffEmptyFile": "（空文件）",
+  "sessionDiffCollapsedLines": "── {count} 行未变更 ──",
+  "@sessionDiffCollapsedLines": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "fileContentCopyTooltip": "复制内容",
+  "fileContentCopied": "已复制到剪贴板",
+  "fileContentLoadFailed": "加载失败",
+  "fileContentLines": "{count} 行",
+  "@fileContentLines": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "fileContentPreviewUnsupported": "不支持预览此文件",
+  "fileContentBinary": "二进制文件",
+  "fileContentBinaryWithMime": "二进制文件（{mimeType}）",
+  "@fileContentBinaryWithMime": {
+    "placeholders": {
+      "mimeType": {
+        "type": "String"
+      }
+    }
+  },
+  "openProjectTitle": "打开项目",
+  "openProjectInputHint": "输入目录名称或路径（如 ~/projects）",
+  "openProjectErrorResolveHome": "无法解析 home 目录",
+  "openProjectErrorOpenFailed": "打开项目失败：{error}",
+  "@openProjectErrorOpenFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "openProjectPlaceholderSearch": "输入目录名称进行搜索",
+  "openProjectPlaceholderPathSupport": "支持路径导航：~/projects/myapp",
+  "openProjectNoMatch": "未找到匹配的目录",
+  "chatInputPickImageFailed": "选择图片失败: {error}",
+  "@chatInputPickImageFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "chatInputAbortFailed": "中断失败: {error}",
+  "@chatInputAbortFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "chatInputSendError": "错误: {error}",
+  "@chatInputSendError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "chatInputShellHint": "输入 shell 命令...",
+  "chatInputAskHint": "随便问点什么...",
+  "chatInputSessionHistory": "会话历史",
+  "chatInputNoSessions": "暂无会话",
+  "chatInputToday": "今天",
+  "chatInputYesterday": "昨天",
+  "chatInputMonthDay": "{month}月{day}日",
+  "@chatInputMonthDay": {
+    "placeholders": {
+      "month": {
+        "type": "int"
+      },
+      "day": {
+        "type": "int"
+      }
+    }
+  },
+  "chatInputJustNow": "刚刚",
+  "chatInputMinutesAgo": "{count} 分钟前",
+  "@chatInputMinutesAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chatInputHoursAgo": "{count} 小时前",
+  "@chatInputHoursAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chatInputDaysAgo": "{count} 天前",
+  "@chatInputDaysAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "chatInputSelectVariant": "选择变体",
+  "chatInputSelectAgent": "选择 Agent",
+  "questionCardSelectOneOrMore": "选择一个或多个答案",
+  "questionCardSelectOne": "选择一个答案",
+  "questionCardIgnore": "忽略",
+  "questionCardPrevious": "上一步",
+  "questionCardSubmit": "提交",
+  "questionCardNext": "下一步",
+  "questionCardCustomAnswerHint": "输入你的答案...",
+  "permissionDockTitle": "权限请求",
+  "permissionDockDeny": "拒绝",
+  "permissionDockAllowAlways": "始终允许",
+  "permissionDockAllowOnce": "允许一次",
+  "permissionDockReplyFailed": "权限响应失败：{error}",
+  "@permissionDockReplyFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "modelSelectionTitle": "选择模型",
+  "modelSelectionSearchHint": "搜索模型",
+  "modelSelectionConfigLoadFailed": "配置加载失败: {error}",
+  "@modelSelectionConfigLoadFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "modelSelectionListLoadFailed": "模型列表加载失败: {error}",
+  "@modelSelectionListLoadFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "modelSelectionNoConnectedProviders": "没有连接的模型提供商",
+  "modelSelectionNoModels": "没有可用的模型",
+  "modelSelectionNoMatchedModels": "没有匹配的模型",
+  "modelSelectionNoModelsUnderProvider": "该提供商下没有可用模型",
+  "modelSelectionFavorited": "已收藏",
+  "messageCopy": "复制",
+  "messageCopied": "已复制",
+  "todoPanelTitle": "AI 任务规划",
+  "todoBadgeInProgress": "{count} 进行中",
+  "@todoBadgeInProgress": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "todoBadgePending": "{count} 待处理",
+  "@todoBadgePending": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "todoBadgeCompleted": "{count} 已完成",
+  "@todoBadgeCompleted": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "todoPriorityHigh": "高优",
+  "todoPriorityMedium": "中",
+  "todoPriorityLow": "低",
+  "sessionCompletedNotificationTitle": "会话已完成",
+  "sessionCompletedNotificationBodyWithTitle": "{title} 已完成",
+  "@sessionCompletedNotificationBodyWithTitle": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "sessionCompletedNotificationBodyWithoutTitle": "有一个会话已完成"
+}
