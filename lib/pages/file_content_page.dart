@@ -438,21 +438,19 @@ class _TextContentView extends StatefulWidget {
 }
 
 class _TextContentViewState extends State<_TextContentView> {
-  final ScrollController _verticalCtrl = ScrollController();
-  final ScrollController _horizontalCtrl = ScrollController();
+  final TransformationController _transformCtrl = TransformationController();
 
   static const double _baseCharWidth = 7.2;
   static const double _codePadding = 12.0 * 2;
-  double _scale = 1.0;
 
   @override
   void dispose() {
-    _verticalCtrl.dispose();
-    _horizontalCtrl.dispose();
+    _transformCtrl.dispose();
     super.dispose();
   }
 
-  double get _charWidth => _baseCharWidth * _scale;
+  double get _charWidth =>
+      _baseCharWidth * _transformCtrl.value.getMaxScaleOnAxis();
 
   double _maxLineWidth(double gutterWidth) {
     int maxChars = 0;
@@ -478,38 +476,26 @@ class _TextContentViewState extends State<_TextContentView> {
         final screenWidth = constraints.maxWidth;
         final estimatedMaxWidth = _maxLineWidth(gutterWidth);
         final contentWidth = math.max(screenWidth, estimatedMaxWidth);
+        final scale = _transformCtrl.value.getMaxScaleOnAxis();
 
-        return GestureDetector(
-          onScaleUpdate: (details) {
-            setState(() {
-              _scale = (_scale * details.scale).clamp(0.5, 3.0);
-            });
-          },
-          child: Scrollbar(
-            controller: _horizontalCtrl,
-            scrollbarOrientation: ScrollbarOrientation.bottom,
-            child: SingleChildScrollView(
-              controller: _horizontalCtrl,
-              scrollDirection: Axis.horizontal,
-              child: SizedBox(
-                width: contentWidth,
-                child: Scrollbar(
-                  controller: _verticalCtrl,
-                  child: ListView.builder(
-                    controller: _verticalCtrl,
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    itemCount: lineCount,
-                    // 每行固定高度，大幅提升 ListView 渲染性能
-                    itemExtent: 22.0 * _scale,
-                    itemBuilder: (context, index) => _CodeLineRow(
-                      lineNumber: index + 1,
-                      text: widget.lines[index],
-                      gutterWidth: gutterWidth,
-                      isEven: index.isEven,
-                      scale: _scale,
-                    ),
-                  ),
-                ),
+        return InteractiveViewer(
+          transformationController: _transformCtrl,
+          minScale: 0.5,
+          maxScale: 3.0,
+          constrained: false,
+          child: SizedBox(
+            width: contentWidth * scale,
+            child: ListView.builder(
+              physics: const NeverScrollableScrollPhysics(),
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              itemCount: lineCount,
+              itemExtent: 22.0 * scale,
+              itemBuilder: (context, index) => _CodeLineRow(
+                lineNumber: index + 1,
+                text: widget.lines[index],
+                gutterWidth: gutterWidth * scale,
+                isEven: index.isEven,
+                scale: scale,
               ),
             ),
           ),
