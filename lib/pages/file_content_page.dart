@@ -441,8 +441,9 @@ class _TextContentViewState extends State<_TextContentView> {
   final ScrollController _verticalCtrl = ScrollController();
   final ScrollController _horizontalCtrl = ScrollController();
 
-  static const double _charWidth = 7.2; // monospace 12px 近似字符宽
-  static const double _codePadding = 12.0 * 2; // 左右 padding
+  static const double _baseCharWidth = 7.2;
+  static const double _codePadding = 12.0 * 2;
+  double _scale = 1.0;
 
   @override
   void dispose() {
@@ -451,7 +452,8 @@ class _TextContentViewState extends State<_TextContentView> {
     super.dispose();
   }
 
-  /// 估算所有行中最长行的像素宽度
+  double get _charWidth => _baseCharWidth * _scale;
+
   double _maxLineWidth(double gutterWidth) {
     int maxChars = 0;
     for (final line in widget.lines) {
@@ -477,27 +479,35 @@ class _TextContentViewState extends State<_TextContentView> {
         final estimatedMaxWidth = _maxLineWidth(gutterWidth);
         final contentWidth = math.max(screenWidth, estimatedMaxWidth);
 
-        return Scrollbar(
-          controller: _horizontalCtrl,
-          scrollbarOrientation: ScrollbarOrientation.bottom,
-          child: SingleChildScrollView(
+        return GestureDetector(
+          onScaleUpdate: (details) {
+            setState(() {
+              _scale = (_scale * details.scale).clamp(0.5, 3.0);
+            });
+          },
+          child: Scrollbar(
             controller: _horizontalCtrl,
-            scrollDirection: Axis.horizontal,
-            child: SizedBox(
-              width: contentWidth,
-              child: Scrollbar(
-                controller: _verticalCtrl,
-                child: ListView.builder(
+            scrollbarOrientation: ScrollbarOrientation.bottom,
+            child: SingleChildScrollView(
+              controller: _horizontalCtrl,
+              scrollDirection: Axis.horizontal,
+              child: SizedBox(
+                width: contentWidth,
+                child: Scrollbar(
                   controller: _verticalCtrl,
-                  padding: const EdgeInsets.symmetric(vertical: 6),
-                  itemCount: lineCount,
-                  // 每行固定高度，大幅提升 ListView 渲染性能
-                  itemExtent: 22.0,
-                  itemBuilder: (context, index) => _CodeLineRow(
-                    lineNumber: index + 1,
-                    text: widget.lines[index],
-                    gutterWidth: gutterWidth,
-                    isEven: index.isEven,
+                  child: ListView.builder(
+                    controller: _verticalCtrl,
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    itemCount: lineCount,
+                    // 每行固定高度，大幅提升 ListView 渲染性能
+                    itemExtent: 22.0 * _scale,
+                    itemBuilder: (context, index) => _CodeLineRow(
+                      lineNumber: index + 1,
+                      text: widget.lines[index],
+                      gutterWidth: gutterWidth,
+                      isEven: index.isEven,
+                      scale: _scale,
+                    ),
                   ),
                 ),
               ),
@@ -519,12 +529,14 @@ class _CodeLineRow extends StatelessWidget {
     required this.text,
     required this.gutterWidth,
     required this.isEven,
+    this.scale = 1.0,
   });
 
   final int lineNumber;
   final String text;
   final double gutterWidth;
   final bool isEven;
+  final double scale;
 
   @override
   Widget build(BuildContext context) {
@@ -542,7 +554,7 @@ class _CodeLineRow extends StatelessWidget {
           child: Text(
             '$lineNumber',
             style: TextStyle(
-              fontSize: 12,
+              fontSize: 12 * scale,
               color: tokens.mutedForeground,
               fontFamily: 'monospace',
               height: 1.0,
@@ -562,7 +574,7 @@ class _CodeLineRow extends StatelessWidget {
             child: Text(
               text,
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 12 * scale,
                 color: colorScheme.onSurface,
                 fontFamily: 'monospace',
                 height: 1.0,
