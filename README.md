@@ -60,6 +60,7 @@ opencode serve
 6. To change the server address, go to Settings → Server.
 
 > First launch skips the connection config page and goes straight to the main interface.
+> Reason: The original "Save & Enter" button has a navigation bug — clicking it fails to navigate to the project list page. Unable to fix it, so this page is bypassed entirely.
 > Default server address can be changed in Settings.
 
 Server references:
