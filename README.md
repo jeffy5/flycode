@@ -1,10 +1,10 @@
 # FlyCode
 
-[English](./README.md) | [简体中文](./README.zh-CN.md)
+[简体中文](./README.zh-CN.md) | [English](./README.md)
 
-## Description and Screenshots
+## Description
 
-FlyCode is a mobile client for `opencode`, built for Android and iOS. It lets you connect to your `opencode server`, browse projects, continue coding sessions, and work with the agent from a phone-first interface.
+FlyCode is an Android mobile client for `opencode`. It lets you connect to your `opencode server`, browse projects, continue coding sessions, and work with the agent from a mobile device.
 
 > FlyCode requires a running `opencode server`.
 > Docs: https://opencode.ai/docs/server/
@@ -18,11 +18,32 @@ FlyCode is a mobile client for `opencode`, built for Android and iOS. It lets yo
 
 ## Features
 
-- Connect to `opencode server` with a custom server address and optional authentication
+- Connect to `opencode server` with custom address and optional auth
 - Browse projects and jump into new or existing coding sessions
-- Chat with the coding agent through a mobile-optimized interface
-- Review permission requests, todos, diffs, and session context in the app
+- Mobile-optimized agent chat with real-time SSE streaming
+- Review permission requests, todos, diffs, and session context in-app
 - Adjust model, language, theme mode, and notification preferences
+- **File browser**: browse project directory tree, view file contents
+- **Long-press copy path**: quickly copy absolute file/directory paths
+
+## Enhancements over Upstream
+
+### Performance
+- **Granular message updates**: SSE deltas only update the affected message bubble via `ValueNotifier`, no full list rebuild
+- **Typewriter throttle**: 24ms → 100ms, 75% less markdown re-rendering
+- **Signature optimization**: linear scan replaces full List copy in `_messageListSignature`
+- **Cache extent**: `cacheExtent: 500` for smoother scrolling
+
+### Network & Caching
+- **30-message pagination**: initial fetch of 30, auto-load more on scroll to top
+- **sqflite local cache**: messages persisted to phone storage, zero-network cold start
+- **HTTP timeout 60s**: large sessions no longer fail
+- **In-memory keepAlive**: session switch triggers no re-fetch
+
+### New Features
+- **File browser**: 📁 entry in AppBar, browse directories, view file content
+- **Delete/rename sessions**: swipe to delete, long-press to rename
+- **Todo collapsed by default**: does not block chat view
 
 ## Use
 
@@ -33,9 +54,13 @@ opencode serve
 ```
 
 2. By default, the server runs at `http://127.0.0.1:4096`.
-3. Install and open FlyCode on your device.
-4. Enter the server address in the app and connect.
+3. Install the APK and open FlyCode.
+4. The app connects to the default address automatically and goes straight to the project list.
 5. Pick a project, open a session, and start working with the agent.
+6. To change the server address, go to Settings → Server.
+
+> First launch skips the connection config page and goes straight to the main interface.
+> Default server address can be changed in Settings.
 
 Server references:
 
@@ -48,7 +73,7 @@ If you want to build FlyCode yourself, make sure you have:
 
 - Flutter SDK
 - Dart SDK `^3.11.0`
-- Android or iOS build environment
+- Android build environment
 - A running `opencode server` for local testing
 
 Install dependencies:
@@ -73,5 +98,11 @@ flutter run -d <device-id>
 If you change generated models or providers, run:
 
 ```bash
-dart run build_runner build --delete-conflicting-outputs
+dart run build_runner build
+```
+
+Build APK:
+
+```bash
+flutter build apk --release
 ```
