@@ -42,7 +42,7 @@ abstract class _$PendingPermissions
   FutureOr<List<PermissionRequest>> build();
   @$mustCallSuper
   @override
-  WhenComplete runBuild() {
+  void runBuild() {
     final ref =
         this.ref
             as $Ref<
@@ -60,7 +60,7 @@ abstract class _$PendingPermissions
               Object?,
               Object?
             >;
-    return element.handleCreate(ref, build);
+    element.handleCreate(ref, build);
   }
 }
 

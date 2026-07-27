@@ -56,7 +56,7 @@ final class SessionMessagesNotifierProvider
 }
 
 String _$sessionMessagesNotifierHash() =>
-    r'83a105a09ab154353f244981c9efd09281b09683';
+    r'1e3a0c7c8f9a1b9fb15312c5054cfd6f60eea068';
 
 final class SessionMessagesNotifierFamily extends $Family
     with
@@ -91,7 +91,7 @@ abstract class _$SessionMessagesNotifier
   FutureOr<List<MessageWithParts>> build(String sessionID);
   @$mustCallSuper
   @override
-  WhenComplete runBuild() {
+  void runBuild() {
     final ref =
         this.ref
             as $Ref<AsyncValue<List<MessageWithParts>>, List<MessageWithParts>>;
@@ -106,7 +106,7 @@ abstract class _$SessionMessagesNotifier
               Object?,
               Object?
             >;
-    return element.handleCreate(ref, () => build(_$args));
+    element.handleCreate(ref, () => build(_$args));
   }
 }
 
@@ -236,7 +236,7 @@ final class SubSessionMessagesNotifierProvider
 }
 
 String _$subSessionMessagesNotifierHash() =>
-    r'a4dd32ff636a842f84c5f97fcf011489b5b2b37f';
+    r'1efa5c7d348a6dcec97af0262b37bb586afc4763';
 
 /// 子 Session 消息列表（只读，支持 SSE 实时更新）
 
@@ -277,7 +277,7 @@ abstract class _$SubSessionMessagesNotifier
   FutureOr<List<MessageWithParts>> build(String sessionID);
   @$mustCallSuper
   @override
-  WhenComplete runBuild() {
+  void runBuild() {
     final ref =
         this.ref
             as $Ref<AsyncValue<List<MessageWithParts>>, List<MessageWithParts>>;
@@ -292,6 +292,6 @@ abstract class _$SubSessionMessagesNotifier
               Object?,
               Object?
             >;
-    return element.handleCreate(ref, () => build(_$args));
+    element.handleCreate(ref, () => build(_$args));
   }
 }

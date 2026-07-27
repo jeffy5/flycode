@@ -6,7 +6,6 @@ import 'models/chat_route_args.dart';
 import 'models/typed_route_args.dart';
 import 'pages/app_entry_page.dart';
 import 'pages/about_page.dart';
-import 'pages/file_browser_page.dart';
 import 'pages/file_content_page.dart';
 import 'pages/home_page.dart';
 import 'pages/language_page.dart';
@@ -22,18 +21,18 @@ import 'pages/sub_session_page.dart';
 import 'models/server_config.dart';
 import 'route_navigation.dart';
 
-final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>(
+final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(
   debugLabel: 'root',
 );
 
 final GoRouter appRouter = GoRouter(
-  navigatorKey: rootNavigatorKey,
+  navigatorKey: _rootNavigatorKey,
   initialLocation: '/',
   routes: <RouteBase>[
     GoRoute(path: '/', builder: (context, state) => const AppEntryPage()),
     GoRoute(
       path: '/chat',
-      parentNavigatorKey: rootNavigatorKey,
+      parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) {
         final args = state.extra as ChatRouteArgs?;
         return MyHomePage(title: context.l10n.chatTitle, args: args);
@@ -45,17 +44,17 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(
       path: '/settings/theme',
-      parentNavigatorKey: rootNavigatorKey,
+      parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const ThemeModePage(),
     ),
     GoRoute(
       path: '/settings/language',
-      parentNavigatorKey: rootNavigatorKey,
+      parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const LanguagePage(),
     ),
     GoRoute(
       path: '/settings/server',
-      parentNavigatorKey: rootNavigatorKey,
+      parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) {
         final config = state.extra as ServerConfig?;
         return ServerConfigPage(initialConfig: config);
@@ -63,27 +62,27 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(
       path: '/settings/model',
-      parentNavigatorKey: rootNavigatorKey,
+      parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const ModelConfigPage(),
     ),
     GoRoute(
       path: '/settings/session-completion-notification',
-      parentNavigatorKey: rootNavigatorKey,
+      parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const SessionCompletionNotificationPage(),
     ),
     GoRoute(
       path: '/settings/about',
-      parentNavigatorKey: rootNavigatorKey,
+      parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const AboutPage(),
     ),
     GoRoute(
       path: '/projects',
-      parentNavigatorKey: rootNavigatorKey,
+      parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const ProjectListPage(),
     ),
     GoRoute(
       path: sessionDiffRoutePath,
-      parentNavigatorKey: rootNavigatorKey,
+      parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) {
         final args = state.extra as SessionDiffRouteArgs;
         return SessionDiffPage(sessionID: args.sessionID);
@@ -91,7 +90,7 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(
       path: fileContentRoutePath,
-      parentNavigatorKey: rootNavigatorKey,
+      parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) {
         final args = state.extra as FileContentRouteArgs;
         return FileContentPage(filePath: args.filePath);
@@ -99,7 +98,7 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(
       path: subSessionRoutePath,
-      parentNavigatorKey: rootNavigatorKey,
+      parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) {
         final args = state.extra as SubSessionRouteArgs;
         return SubSessionPage(sessionID: args.sessionID);
@@ -107,18 +106,10 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(
       path: sessionContextRoutePath,
-      parentNavigatorKey: rootNavigatorKey,
+      parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) {
         final args = state.extra as SessionContextRouteArgs;
         return SessionContextPage(sessionID: args.sessionID);
-      },
-    ),
-    GoRoute(
-      path: fileBrowserRoutePath,
-      parentNavigatorKey: rootNavigatorKey,
-      builder: (context, state) {
-        final args = state.extra as FileBrowserRouteArgs;
-        return FileBrowserPage(directory: args.directory);
       },
     ),
   ],

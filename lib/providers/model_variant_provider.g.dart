@@ -47,7 +47,7 @@ abstract class _$ModelVariant extends $Notifier<ModelVariantState> {
   ModelVariantState build();
   @$mustCallSuper
   @override
-  WhenComplete runBuild() {
+  void runBuild() {
     final ref = this.ref as $Ref<ModelVariantState, ModelVariantState>;
     final element =
         ref.element
@@ -57,6 +57,6 @@ abstract class _$ModelVariant extends $Notifier<ModelVariantState> {
               Object?,
               Object?
             >;
-    return element.handleCreate(ref, build);
+    element.handleCreate(ref, build);
   }
 }

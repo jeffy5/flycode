@@ -22,7 +22,7 @@ class TodoListWidget extends ConsumerStatefulWidget {
 }
 
 class _TodoListWidgetState extends ConsumerState<TodoListWidget> {
-  bool _expanded = false;
+  bool _expanded = true;
 
   @override
   Widget build(BuildContext context) {

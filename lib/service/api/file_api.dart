@@ -32,6 +32,7 @@ class FileApi {
     final Map<String, dynamic> json = await _client.get(
       '/file/content',
       queryParameters: {'path': path},
+      extraHeaders: _extraHeaders,
     );
     return FileContent.fromJson(json);
   }

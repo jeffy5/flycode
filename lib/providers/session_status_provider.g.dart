@@ -67,7 +67,7 @@ abstract class _$SessionStatusNotifier
   Map<String, SessionStatus> build();
   @$mustCallSuper
   @override
-  WhenComplete runBuild() {
+  void runBuild() {
     final ref =
         this.ref
             as $Ref<Map<String, SessionStatus>, Map<String, SessionStatus>>;
@@ -82,6 +82,6 @@ abstract class _$SessionStatusNotifier
               Object?,
               Object?
             >;
-    return element.handleCreate(ref, build);
+    element.handleCreate(ref, build);
   }
 }

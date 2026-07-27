@@ -47,7 +47,7 @@ abstract class _$CurrentDirectory extends $Notifier<String?> {
   String? build();
   @$mustCallSuper
   @override
-  WhenComplete runBuild() {
+  void runBuild() {
     final ref = this.ref as $Ref<String?, String?>;
     final element =
         ref.element
@@ -57,6 +57,6 @@ abstract class _$CurrentDirectory extends $Notifier<String?> {
               Object?,
               Object?
             >;
-    return element.handleCreate(ref, build);
+    element.handleCreate(ref, build);
   }
 }

@@ -43,7 +43,3 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
-
-# Keystore (sensitive)
-android/key.properties
-android/key.jks

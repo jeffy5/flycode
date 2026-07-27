@@ -120,7 +120,7 @@ abstract class _$ProjectPins extends $AsyncNotifier<Map<String, int>> {
   FutureOr<Map<String, int>> build();
   @$mustCallSuper
   @override
-  WhenComplete runBuild() {
+  void runBuild() {
     final ref =
         this.ref as $Ref<AsyncValue<Map<String, int>>, Map<String, int>>;
     final element =
@@ -131,6 +131,6 @@ abstract class _$ProjectPins extends $AsyncNotifier<Map<String, int>> {
               Object?,
               Object?
             >;
-    return element.handleCreate(ref, build);
+    element.handleCreate(ref, build);
   }
 }

@@ -39,7 +39,7 @@ abstract class _$ProviderList extends $AsyncNotifier<ProviderListResponse> {
   FutureOr<ProviderListResponse> build();
   @$mustCallSuper
   @override
-  WhenComplete runBuild() {
+  void runBuild() {
     final ref =
         this.ref
             as $Ref<AsyncValue<ProviderListResponse>, ProviderListResponse>;
@@ -54,6 +54,6 @@ abstract class _$ProviderList extends $AsyncNotifier<ProviderListResponse> {
               Object?,
               Object?
             >;
-    return element.handleCreate(ref, build);
+    element.handleCreate(ref, build);
   }
 }

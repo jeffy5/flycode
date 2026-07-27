@@ -48,7 +48,7 @@ abstract class _$ChatConfigNotifier extends $Notifier<ChatConfig> {
   ChatConfig build();
   @$mustCallSuper
   @override
-  WhenComplete runBuild() {
+  void runBuild() {
     final ref = this.ref as $Ref<ChatConfig, ChatConfig>;
     final element =
         ref.element
@@ -58,6 +58,6 @@ abstract class _$ChatConfigNotifier extends $Notifier<ChatConfig> {
               Object?,
               Object?
             >;
-    return element.handleCreate(ref, build);
+    element.handleCreate(ref, build);
   }
 }

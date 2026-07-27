@@ -125,7 +125,7 @@ abstract class _$ModelConfigNotifier
   FutureOr<Map<String, Map<String, bool>>> build();
   @$mustCallSuper
   @override
-  WhenComplete runBuild() {
+  void runBuild() {
     final ref =
         this.ref
             as $Ref<
@@ -143,6 +143,6 @@ abstract class _$ModelConfigNotifier
               Object?,
               Object?
             >;
-    return element.handleCreate(ref, build);
+    element.handleCreate(ref, build);
   }
 }

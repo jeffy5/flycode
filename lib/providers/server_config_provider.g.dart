@@ -40,7 +40,7 @@ abstract class _$ServerConfigNotifier extends $AsyncNotifier<ServerConfig> {
   FutureOr<ServerConfig> build();
   @$mustCallSuper
   @override
-  WhenComplete runBuild() {
+  void runBuild() {
     final ref = this.ref as $Ref<AsyncValue<ServerConfig>, ServerConfig>;
     final element =
         ref.element
@@ -50,6 +50,6 @@ abstract class _$ServerConfigNotifier extends $AsyncNotifier<ServerConfig> {
               Object?,
               Object?
             >;
-    return element.handleCreate(ref, build);
+    element.handleCreate(ref, build);
   }
 }

@@ -21,9 +21,3 @@ class SessionContextRouteArgs {
 
   final String sessionID;
 }
-
-class FileBrowserRouteArgs {
-  const FileBrowserRouteArgs({required this.directory});
-
-  final String directory;
-}

@@ -47,7 +47,7 @@ abstract class _$ThemeMode extends $Notifier<AppThemeMode> {
   AppThemeMode build();
   @$mustCallSuper
   @override
-  WhenComplete runBuild() {
+  void runBuild() {
     final ref = this.ref as $Ref<AppThemeMode, AppThemeMode>;
     final element =
         ref.element
@@ -57,6 +57,6 @@ abstract class _$ThemeMode extends $Notifier<AppThemeMode> {
               Object?,
               Object?
             >;
-    return element.handleCreate(ref, build);
+    element.handleCreate(ref, build);
   }
 }

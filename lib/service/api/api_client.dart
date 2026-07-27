@@ -160,11 +160,10 @@ class ApiClient {
   }
 
   Future<dynamic> _executeRequest(
-    Future<http.Response> Function() request, {
-    Duration? timeout,
-  }) async {
+    Future<http.Response> Function() request,
+  ) async {
     try {
-      final response = await request().timeout(timeout ?? _requestTimeout);
+      final response = await request().timeout(_requestTimeout);
       return _handleResponse(response);
     } on ApiException {
       rethrow;
@@ -203,7 +202,6 @@ class ApiClient {
     String path, {
     Map<String, String>? queryParameters,
     Map<String, String>? extraHeaders,
-    Duration? timeout,
   }) async {
     _ensureOpen();
     final headers = _getHeaders();
@@ -213,7 +211,6 @@ class ApiClient {
         _getUri(path, queryParameters: queryParameters),
         headers: headers,
       ),
-      timeout: timeout,
     );
   }
 

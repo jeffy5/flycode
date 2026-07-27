@@ -54,7 +54,7 @@ abstract class _$PendingQuestionsNotifier
   FutureOr<List<QuestionRequest>> build();
   @$mustCallSuper
   @override
-  WhenComplete runBuild() {
+  void runBuild() {
     final ref =
         this.ref
             as $Ref<AsyncValue<List<QuestionRequest>>, List<QuestionRequest>>;
@@ -69,7 +69,7 @@ abstract class _$PendingQuestionsNotifier
               Object?,
               Object?
             >;
-    return element.handleCreate(ref, build);
+    element.handleCreate(ref, build);
   }
 }
 

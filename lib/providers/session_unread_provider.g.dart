@@ -48,7 +48,7 @@ abstract class _$SessionUnreadNotifier extends $Notifier<SessionUnreadState> {
   SessionUnreadState build();
   @$mustCallSuper
   @override
-  WhenComplete runBuild() {
+  void runBuild() {
     final ref = this.ref as $Ref<SessionUnreadState, SessionUnreadState>;
     final element =
         ref.element
@@ -58,7 +58,7 @@ abstract class _$SessionUnreadNotifier extends $Notifier<SessionUnreadState> {
               Object?,
               Object?
             >;
-    return element.handleCreate(ref, build);
+    element.handleCreate(ref, build);
   }
 }
 

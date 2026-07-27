@@ -1,8 +1,4 @@
-import 'dart:async';
-import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import '../database/database_helper.dart';
 import '../service/api/models/message.dart' hide FileDiff;
 import '../service/api/models/parts.dart';
 import '../service/api/session_api.dart';
@@ -131,77 +127,11 @@ final class MessageListStateReducer {
 
 @riverpod
 class SessionMessagesNotifier extends _$SessionMessagesNotifier {
-  static const int _pageSize = 30;
-  bool _hasMore = true;
-  final Map<String, ValueNotifier<MessageWithParts>> _contentNotifiers = {};
-
-  bool get hasMore => _hasMore;
-
-  /// 获取某个消息的内容通知器，用于最小粒度刷新
-  ValueNotifier<MessageWithParts> contentNotifier(String messageID) {
-    return _contentNotifiers.putIfAbsent(
-      messageID,
-      () => ValueNotifier(_findMessage(messageID)),
-    );
-  }
-
-  MessageWithParts _findMessage(String id) {
-    final msgs = _currentMessages;
-    final idx = msgs.indexWhere((m) => _messageId(m) == id);
-    return idx >= 0 ? msgs[idx] : MessageWithParts(info: '', parts: const []);
-  }
-
   @override
   Future<List<MessageWithParts>> build(String sessionID) async {
-    ref.keepAlive();
-    _hasMore = true;
-    _contentNotifiers.clear();
-
-    // 有缓存就不调 API，像微信一样
-    final cached = await DatabaseHelper().loadSessionCache(sessionID);
-    if (cached != null && cached.isNotEmpty) {
-      final decoded = (jsonDecode(cached) as List)
-          .map((e) => MessageWithParts.fromJson(e as Map<String, dynamic>))
-          .toList();
-      final normalized = _normalizeMessages(decoded);
-      _hasMore = true;
-      return normalized;
-    }
-
     final api = await ref.watch(sessionApiProvider.future);
-    final messages = await api.getSessionMessages(sessionID, limit: _pageSize);
-    if (messages.length < _pageSize) _hasMore = false;
-    final normalized = _normalizeMessages(messages);
-    _saveCache(sessionID, normalized);
-    return normalized;
-  }
-
-  /// 手动刷新（下拉/按钮触发）
-  Future<void> refresh() async {
-    final api = await ref.watch(sessionApiProvider.future);
-    final messages = await api.getSessionMessages(sessionID, limit: _pageSize);
-    if (messages.length < _pageSize) _hasMore = false;
-    final normalized = _normalizeMessages(messages);
-    _saveCache(sessionID, normalized);
-    _setState(normalized);
-  }
-
-  Future<void> loadMore() async {
-    final api = await ref.watch(sessionApiProvider.future);
-    final current = _currentMessages;
-    final newLimit = current.length + _pageSize;
-    final messages = await api.getSessionMessages(sessionID, limit: newLimit);
-    if (messages.length < newLimit) _hasMore = false;
-    final normalized = _normalizeMessages(messages);
-    _saveCache(sessionID, normalized);
-    _setState(normalized);
-  }
-
-  void _saveCache(String sid, List<MessageWithParts> msgs) {
-    try {
-      final jsonStr = jsonEncode(msgs.map((m) => m.toJson()).toList());
-      unawaited(DatabaseHelper().saveSessionCache(sid, jsonStr));
-    } catch (_) {}
+    final messages = await api.getSessionMessages(sessionID);
+    return _normalizeMessages(messages);
   }
 
   /// SSE: message.updated — 新增或更新一条消息（保留已有 parts）
@@ -213,7 +143,6 @@ class SessionMessagesNotifier extends _$SessionMessagesNotifier {
   /// SSE: message.removed — 删除一条消息
   void removeMessage(String sessionID, String messageID) {
     if (this.sessionID != sessionID) return;
-    _contentNotifiers.remove(messageID);
     _setState(
       MessageListStateReducer.removeMessage(_currentMessages, messageID),
     );
@@ -222,12 +151,9 @@ class SessionMessagesNotifier extends _$SessionMessagesNotifier {
   /// SSE: message.part.updated — 新增或更新某条消息的一个 part
   void updatePart(String sessionID, String messageID, Object newPart) {
     if (this.sessionID != sessionID) return;
-    final result = MessageListStateReducer.updatePart(
-      _currentMessages,
-      messageID,
-      newPart,
+    _setState(
+      MessageListStateReducer.updatePart(_currentMessages, messageID, newPart),
     );
-    _setState(result);
   }
 
   /// SSE: message.part.removed — 删除某条消息的一个 part
@@ -238,7 +164,7 @@ class SessionMessagesNotifier extends _$SessionMessagesNotifier {
     );
   }
 
-  /// SSE: message.part.delta — 只刷新单个消息，不触发全列表重建
+  /// SSE: message.part.delta — 增量追加某个 part 的文本内容
   void appendPartDelta(
     String sessionID,
     String messageID,
@@ -247,65 +173,22 @@ class SessionMessagesNotifier extends _$SessionMessagesNotifier {
     String delta,
   ) {
     if (this.sessionID != sessionID) return;
-    if (field != 'text' || delta.isEmpty) return;
-
-    // 在内部列表中更新消息内容
-    final current = _currentMessages;
-    final msgIdx = current.indexWhere((m) => _messageId(m) == messageID);
-    if (msgIdx < 0) return;
-
-    final message = current[msgIdx];
-    final partIdx = message.parts.indexWhere((p) => partId(p) == partID);
-    final newParts = List<Object>.from(message.parts);
-
-    if (partIdx >= 0) {
-      final part = message.parts[partIdx];
-      if (part is! TextPart) return;
-      newParts[partIdx] = TextPart(
-        id: part.id,
-        sessionID: part.sessionID,
-        messageID: part.messageID,
-        type: part.type,
-        text: '${part.text}$delta',
-        synthetic: part.synthetic,
-        ignored: part.ignored,
-        time: part.time,
-        metadata: part.metadata,
-      );
-    } else {
-      newParts.add(
-        TextPart(
-          id: partID,
-          sessionID: sessionID,
-          messageID: messageID,
-          type: 'text',
-          text: delta,
-        ),
-      );
-    }
-
-    // 只替换内部列表，不触发 provider 通知
-    final updatedMsg = _messageWithNormalizedParts(message.info, newParts);
-    final newList = List<MessageWithParts>.from(current);
-    newList[msgIdx] = updatedMsg;
-    state = AsyncData(newList);
-
-    // 只通知这个消息的监听器
-    final notifier = _contentNotifiers[messageID];
-    if (notifier != null) {
-      notifier.value = updatedMsg;
-    }
+    _setState(
+      MessageListStateReducer.appendPartDelta(
+        _currentMessages,
+        sessionID,
+        messageID,
+        partID,
+        field,
+        delta,
+      ),
+    );
   }
 
   List<MessageWithParts> get _currentMessages => state.asData?.value ?? [];
 
   void _setState(List<MessageWithParts> messages) {
     state = AsyncData(messages);
-    for (final m in messages) {
-      final mid = _messageId(m);
-      final notifier = _contentNotifiers[mid];
-      if (notifier != null) notifier.value = m;
-    }
   }
 }
 
@@ -325,59 +208,11 @@ Future<List<FileDiff>> sessionDiff(Ref ref, String sessionID) async {
 /// 子 Session 消息列表（只读，支持 SSE 实时更新）
 @riverpod
 class SubSessionMessagesNotifier extends _$SubSessionMessagesNotifier {
-  static const int _pageSize = 30;
-  bool _hasMore = true;
-
-  bool get hasMore => _hasMore;
-
   @override
   Future<List<MessageWithParts>> build(String sessionID) async {
-    ref.keepAlive();
-    _hasMore = true;
-
-    final cached = await DatabaseHelper().loadSessionCache(sessionID);
-    if (cached != null && cached.isNotEmpty) {
-      final decoded = (jsonDecode(cached) as List)
-          .map((e) => MessageWithParts.fromJson(e as Map<String, dynamic>))
-          .toList();
-      final normalized = _normalizeMessages(decoded);
-      _hasMore = true;
-      return normalized;
-    }
-
     final api = await ref.watch(sessionApiProvider.future);
-    final messages = await api.getSessionMessages(sessionID, limit: _pageSize);
-    if (messages.length < _pageSize) _hasMore = false;
-    final normalized = _normalizeMessages(messages);
-    _saveCache(sessionID, normalized);
-    return normalized;
-  }
-
-  Future<void> refresh() async {
-    final api = await ref.watch(sessionApiProvider.future);
-    final messages = await api.getSessionMessages(sessionID, limit: _pageSize);
-    if (messages.length < _pageSize) _hasMore = false;
-    final normalized = _normalizeMessages(messages);
-    _saveCache(sessionID, normalized);
-    _setState(normalized);
-  }
-
-  Future<void> loadMore() async {
-    final api = await ref.watch(sessionApiProvider.future);
-    final current = _currentMessages;
-    final newLimit = current.length + _pageSize;
-    final messages = await api.getSessionMessages(sessionID, limit: newLimit);
-    if (messages.length < newLimit) _hasMore = false;
-    final normalized = _normalizeMessages(messages);
-    _saveCache(sessionID, normalized);
-    _setState(normalized);
-  }
-
-  void _saveCache(String sid, List<MessageWithParts> msgs) {
-    try {
-      final jsonStr = jsonEncode(msgs.map((m) => m.toJson()).toList());
-      unawaited(DatabaseHelper().saveSessionCache(sid, jsonStr));
-    } catch (_) {}
+    final messages = await api.getSessionMessages(sessionID);
+    return _normalizeMessages(messages);
   }
 
   void updateMessage(String msgSessionID, MessageWithParts message) {

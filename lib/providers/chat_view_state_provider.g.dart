@@ -48,7 +48,7 @@ abstract class _$ChatViewStateNotifier extends $Notifier<ChatViewState> {
   ChatViewState build();
   @$mustCallSuper
   @override
-  WhenComplete runBuild() {
+  void runBuild() {
     final ref = this.ref as $Ref<ChatViewState, ChatViewState>;
     final element =
         ref.element
@@ -58,6 +58,6 @@ abstract class _$ChatViewStateNotifier extends $Notifier<ChatViewState> {
               Object?,
               Object?
             >;
-    return element.handleCreate(ref, build);
+    element.handleCreate(ref, build);
   }
 }

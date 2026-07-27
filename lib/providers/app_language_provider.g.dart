@@ -49,7 +49,7 @@ abstract class _$AppLanguageNotifier
   app_language.AppLanguage build();
   @$mustCallSuper
   @override
-  WhenComplete runBuild() {
+  void runBuild() {
     final ref =
         this.ref as $Ref<app_language.AppLanguage, app_language.AppLanguage>;
     final element =
@@ -60,6 +60,6 @@ abstract class _$AppLanguageNotifier
               Object?,
               Object?
             >;
-    return element.handleCreate(ref, build);
+    element.handleCreate(ref, build);
   }
 }

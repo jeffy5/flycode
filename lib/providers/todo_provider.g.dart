@@ -112,7 +112,7 @@ abstract class _$SessionTodosNotifier extends $AsyncNotifier<List<Todo>> {
   FutureOr<List<Todo>> build(String sessionID);
   @$mustCallSuper
   @override
-  WhenComplete runBuild() {
+  void runBuild() {
     final ref = this.ref as $Ref<AsyncValue<List<Todo>>, List<Todo>>;
     final element =
         ref.element
@@ -122,6 +122,6 @@ abstract class _$SessionTodosNotifier extends $AsyncNotifier<List<Todo>> {
               Object?,
               Object?
             >;
-    return element.handleCreate(ref, () => build(_$args));
+    element.handleCreate(ref, () => build(_$args));
   }
 }

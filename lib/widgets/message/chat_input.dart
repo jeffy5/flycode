@@ -1579,200 +1579,73 @@ class _SessionHistorySheet extends ConsumerWidget {
 
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 2),
-                              child: Dismissible(
-                                key: ValueKey('session_${session.id}'),
-                                direction: DismissDirection.endToStart,
-                                background: Container(
-                                  alignment: Alignment.centerRight,
-                                  padding: const EdgeInsets.only(right: 20),
-                                  decoration: BoxDecoration(
-                                    color: theme.colorScheme.error,
-                                    borderRadius: BorderRadius.circular(14),
-                                  ),
-                                  child: Icon(
-                                    Icons.delete_outline_rounded,
-                                    color: theme.colorScheme.onError,
-                                  ),
-                                ),
-                                confirmDismiss: (direction) async {
-                                  return await showDialog<bool>(
-                                        context: context,
-                                        builder: (ctx) => AlertDialog(
-                                          title: const Text('删除会话'),
-                                          content: Text(
-                                            '确定删除「${session.title ?? session.id}」吗？',
-                                          ),
-                                          actions: [
-                                            TextButton(
-                                              onPressed: () =>
-                                                  Navigator.pop(ctx, false),
-                                              child: const Text('取消'),
-                                            ),
-                                            TextButton(
-                                              onPressed: () =>
-                                                  Navigator.pop(ctx, true),
-                                              child: Text(
-                                                '删除',
+                              child: Material(
+                                color: isSelected
+                                    ? theme.colorScheme.primary.withValues(
+                                        alpha: 0.1,
+                                      )
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(14),
+                                child: InkWell(
+                                  onTap: () => onSelectSession(session),
+                                  borderRadius: BorderRadius.circular(14),
+                                  hoverColor: tokens.accent,
+                                  child: Container(
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 8,
+                                    ),
+                                    child: Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      children: [
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                session.title ?? session.id,
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
                                                 style: TextStyle(
-                                                  color:
-                                                      theme.colorScheme.error,
+                                                  fontFamily: 'Inter',
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: isSelected
+                                                      ? theme
+                                                            .colorScheme
+                                                            .primary
+                                                      : theme
+                                                            .colorScheme
+                                                            .onSurface,
                                                 ),
                                               ),
-                                            ),
-                                          ],
-                                        ),
-                                      ) ??
-                                      false;
-                                },
-                                onDismissed: (_) async {
-                                  try {
-                                    final api = await ref.read(
-                                      sessionApiProvider.future,
-                                    );
-                                    await api.deleteSession(session.id);
-                                    ref.invalidate(sessionsProvider);
-                                  } catch (e) {
-                                    if (context.mounted) {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(content: Text('删除失败: $e')),
-                                      );
-                                    }
-                                  }
-                                },
-                                child: Material(
-                                  color: isSelected
-                                      ? theme.colorScheme.primary.withValues(
-                                          alpha: 0.1,
-                                        )
-                                      : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(14),
-                                  child: InkWell(
-                                    onTap: () => onSelectSession(session),
-                                    onLongPress: () {
-                                      final controller = TextEditingController(
-                                        text: session.title ?? '',
-                                      );
-                                      showDialog(
-                                        context: context,
-                                        builder: (ctx) => AlertDialog(
-                                          title: const Text('重命名会话'),
-                                          content: TextField(
-                                            controller: controller,
-                                            autofocus: true,
-                                            decoration: const InputDecoration(
-                                              hintText: '输入新名称',
-                                            ),
-                                          ),
-                                          actions: [
-                                            TextButton(
-                                              onPressed: () =>
-                                                  Navigator.pop(ctx),
-                                              child: const Text('取消'),
-                                            ),
-                                            TextButton(
-                                              onPressed: () async {
-                                                final newTitle = controller.text
-                                                    .trim();
-                                                if (newTitle.isNotEmpty) {
-                                                  try {
-                                                    final api = await ref.read(
-                                                      sessionApiProvider.future,
-                                                    );
-                                                    await api.updateSession(
-                                                      session.id,
-                                                      data: {'title': newTitle},
-                                                    );
-                                                    ref.invalidate(
-                                                      sessionsProvider,
-                                                    );
-                                                  } catch (e) {
-                                                    if (context.mounted) {
-                                                      ScaffoldMessenger.of(
-                                                        context,
-                                                      ).showSnackBar(
-                                                        SnackBar(
-                                                          content: Text(
-                                                            '重命名失败: $e',
-                                                          ),
-                                                        ),
-                                                      );
-                                                    }
-                                                  }
-                                                }
-                                                if (ctx.mounted) {
-                                                  Navigator.pop(ctx);
-                                                }
-                                              },
-                                              child: const Text('确定'),
-                                            ),
-                                          ],
-                                        ),
-                                      );
-                                    },
-                                    borderRadius: BorderRadius.circular(14),
-                                    hoverColor: tokens.accent,
-                                    child: Container(
-                                      width: double.infinity,
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 8,
-                                      ),
-                                      child: Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.center,
-                                        children: [
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  session.title ?? session.id,
-                                                  maxLines: 1,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                  style: TextStyle(
-                                                    fontFamily: 'Inter',
-                                                    fontSize: 14,
-                                                    fontWeight: FontWeight.w600,
-                                                    color: isSelected
-                                                        ? theme
-                                                              .colorScheme
-                                                              .primary
-                                                        : theme
-                                                              .colorScheme
-                                                              .onSurface,
-                                                  ),
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                _formatUpdatedTimeForHistory(
+                                                  context,
+                                                  session.updatedAt,
                                                 ),
-                                                const SizedBox(height: 2),
-                                                Text(
-                                                  _formatUpdatedTimeForHistory(
-                                                    context,
-                                                    session.updatedAt,
-                                                  ),
-                                                  maxLines: 1,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                  style: TextStyle(
-                                                    fontFamily: 'Inter',
-                                                    fontSize: 11,
-                                                    fontWeight: FontWeight.w500,
-                                                    color:
-                                                        tokens.mutedForeground,
-                                                  ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: TextStyle(
+                                                  fontFamily: 'Inter',
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w500,
+                                                  color: tokens.mutedForeground,
                                                 ),
-                                              ],
-                                            ),
+                                              ),
+                                            ],
                                           ),
-                                          if (badgeKind !=
-                                              _SessionListBadgeKind.none) ...[
-                                            const SizedBox(width: 8),
-                                            buildStatusBadge(badgeKind),
-                                          ],
+                                        ),
+                                        if (badgeKind !=
+                                            _SessionListBadgeKind.none) ...[
+                                          const SizedBox(width: 8),
+                                          buildStatusBadge(badgeKind),
                                         ],
-                                      ),
+                                      ],
                                     ),
                                   ),
                                 ),

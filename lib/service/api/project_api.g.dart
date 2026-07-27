@@ -77,7 +77,7 @@ abstract class _$Projects extends $AsyncNotifier<List<Project>> {
   FutureOr<List<Project>> build();
   @$mustCallSuper
   @override
-  WhenComplete runBuild() {
+  void runBuild() {
     final ref = this.ref as $Ref<AsyncValue<List<Project>>, List<Project>>;
     final element =
         ref.element
@@ -87,6 +87,6 @@ abstract class _$Projects extends $AsyncNotifier<List<Project>> {
               Object?,
               Object?
             >;
-    return element.handleCreate(ref, build);
+    element.handleCreate(ref, build);
   }
 }
