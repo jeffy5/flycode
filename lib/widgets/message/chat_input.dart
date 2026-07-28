@@ -33,6 +33,7 @@ import '../../service/api/models/session_status.dart';
 import '../../theme/app_tokens.dart';
 import 'at_mention_controller.dart';
 import 'chat_command_popup.dart';
+import 'chat_file_popup.dart';
 import 'model_selection_sheet.dart';
 
 class _ImageAttachment {
@@ -45,9 +46,14 @@ class _ImageAttachment {
 enum _InputMode { chat, shell }
 
 class ChatInput extends ConsumerStatefulWidget {
-  const ChatInput({super.key, this.commandPanelController});
+  const ChatInput({
+    super.key,
+    this.commandPanelController,
+    this.filePanelController,
+  });
 
   final CommandPanelController? commandPanelController;
+  final FilePanelController? filePanelController;
 
   @override
   ConsumerState<ChatInput> createState() => ChatInputState();
@@ -67,10 +73,7 @@ class ChatInputState extends ConsumerState<ChatInput> {
   final List<_ImageAttachment> _attachments = [];
 
   // ─── @ file mention state ─────────────────────────────────────────
-  OverlayEntry? _atFileOverlay;
   String _atFilter = '';
-  List<String> _atSearchResults = [];
-  int _atHighlightIndex = 0;
   Timer? _atDebounceTimer;
   // Position of the `@` character that triggered the current search.
   int _atTriggerStart = -1;
@@ -92,7 +95,7 @@ class ChatInputState extends ConsumerState<ChatInput> {
 
     if (_inputMode == _InputMode.shell) {
       _hideCommandPanel();
-      _hideAtFileOverlay();
+      _hideFilePanel();
       return;
     }
 
@@ -107,26 +110,24 @@ class ChatInputState extends ConsumerState<ChatInput> {
       if (atMatch != null) {
         final filter = atMatch.group(1)!;
         final atStart = atMatch.start;
-        // Only show overlay if we are not inside a pill.
+        // Only show suggestions if we are not inside a pill.
         if (_controller.pillAt(atStart) == null) {
           _atTriggerStart = atStart;
-          if (filter != _atFilter) {
+          final filePanel = widget.filePanelController;
+          if (filter != _atFilter ||
+              (filePanel != null && filePanel.suggestions.isEmpty)) {
             _atFilter = filter;
-            _atHighlightIndex = 0;
             _triggerAtSearch(filter);
           }
-          if (_atFileOverlay == null && _atSearchResults.isNotEmpty) {
-            _showAtFileOverlay();
-          }
-          // ── @ overlay is active; skip command detection ──
+          // ── @ suggestions are active; skip command detection ──
           _hideCommandPanel();
           return;
         }
       }
     }
 
-    // No @ match — hide the file overlay.
-    _hideAtFileOverlay();
+    // No @ match — hide the file panel.
+    _hideFilePanel();
     _atTriggerStart = -1;
     _atFilter = '';
 
@@ -162,18 +163,8 @@ class ChatInputState extends ConsumerState<ChatInput> {
       try {
         final fileApi = await ref.read(fileApiProvider.future);
         final results = await fileApi.findFile(filter, dirs: true, limit: 10);
-        if (!mounted) return;
-        setState(() {
-          _atSearchResults = results;
-          _atHighlightIndex = 0;
-        });
-        if (_atFileOverlay == null && results.isNotEmpty) {
-          _showAtFileOverlay();
-        } else {
-          _atFileOverlay?.markNeedsBuild();
-          // Hide overlay if no results.
-          if (results.isEmpty) _hideAtFileOverlay();
-        }
+        if (!mounted || filter != _atFilter) return;
+        widget.filePanelController?.show(results, query: filter);
       } catch (_) {
         // Silently ignore search errors.
       }
@@ -213,45 +204,14 @@ class ChatInputState extends ConsumerState<ChatInput> {
     _focusNode.requestFocus();
   }
 
-  // ─── @ File Overlay ───────────────────────────────────────────────
+  // ─── @ File Panel ─────────────────────────────────────────────────
 
-  void _showAtFileOverlay() {
-    if (_atFileOverlay != null) return;
-    final overlay = Overlay.of(context);
-    final mediaQuery = MediaQuery.of(context);
-    final screenWidth = mediaQuery.size.width;
-    final screenHeight = mediaQuery.size.height;
-    const horizontalPadding = 12.0;
-    final overlayWidth = screenWidth - horizontalPadding * 2;
-    final maxHeight = screenHeight * 0.4;
-
-    final renderBox = context.findRenderObject() as RenderBox?;
-    final boxOffset = renderBox?.localToGlobal(Offset.zero) ?? Offset.zero;
-    final bottomY = boxOffset.dy - 4;
-
-    _atFileOverlay = OverlayEntry(
-      builder: (ctx) => Positioned(
-        left: horizontalPadding,
-        bottom: screenHeight - bottomY,
-        width: overlayWidth,
-        child: _AtFileSuggestionList(
-          results: _atSearchResults,
-          highlightIndex: _atHighlightIndex,
-          maxHeight: maxHeight,
-          onSelect: _onFileSelected,
-        ),
-      ),
-    );
-    overlay.insert(_atFileOverlay!);
+  void _hideFilePanel() {
+    widget.filePanelController?.hide();
   }
 
-  void _hideAtFileOverlay() {
-    _atFileOverlay?.remove();
-    _atFileOverlay = null;
-  }
-
-  void _onFileSelected(String relativePath) {
-    _hideAtFileOverlay();
+  void insertFileSuggestion(String relativePath) {
+    _hideFilePanel();
     final sel = _controller.selection;
     final cursorPos = sel.isCollapsed
         ? sel.baseOffset
@@ -259,26 +219,18 @@ class ChatInputState extends ConsumerState<ChatInput> {
     _controller.insertPill(relativePath, _atTriggerStart, cursorPos);
     _atTriggerStart = -1;
     _atFilter = '';
-    _atSearchResults = [];
     _focusNode.requestFocus();
   }
 
-  /// Move highlight up or down in the @ file overlay.
+  /// Move highlight up or down in the @ file panel.
   void _moveAtHighlight(int delta) {
-    if (_atSearchResults.isEmpty) return;
-    setState(() {
-      _atHighlightIndex = (_atHighlightIndex + delta).clamp(
-        0,
-        _atSearchResults.length - 1,
-      );
-    });
-    _atFileOverlay?.markNeedsBuild();
+    widget.filePanelController?.moveHighlight(delta);
   }
 
-  /// Confirm the current highlight in the @ file overlay.
+  /// Confirm the current highlight in the @ file panel.
   void _confirmAtHighlight() {
-    if (_atSearchResults.isEmpty) return;
-    _onFileSelected(_atSearchResults[_atHighlightIndex]);
+    final path = widget.filePanelController?.highlightedPath;
+    if (path != null) insertFileSuggestion(path);
   }
 
   // ─── Keyboard handling ────────────────────────────────────────────
@@ -298,8 +250,8 @@ class ChatInputState extends ConsumerState<ChatInput> {
       return KeyEventResult.handled;
     }
 
-    // @ file overlay navigation.
-    if (_atFileOverlay != null) {
+    // @ file panel navigation.
+    if (widget.filePanelController?.visible ?? false) {
       if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
         _moveAtHighlight(-1);
         return KeyEventResult.handled;
@@ -314,7 +266,7 @@ class ChatInputState extends ConsumerState<ChatInput> {
         return KeyEventResult.handled;
       }
       if (event.logicalKey == LogicalKeyboardKey.escape) {
-        _hideAtFileOverlay();
+        _hideFilePanel();
         return KeyEventResult.handled;
       }
     }
@@ -712,7 +664,7 @@ class ChatInputState extends ConsumerState<ChatInput> {
       return FilePartInput(
         mime: 'text/plain',
         url: 'file://$absPath',
-        filename: rel.split('/').last,
+        filename: fileNameFromPath(rel),
         source: {
           'type': 'file',
           'path': absPath,
@@ -848,7 +800,7 @@ class ChatInputState extends ConsumerState<ChatInput> {
       }
     });
     _hideCommandPanel();
-    _hideAtFileOverlay();
+    _hideFilePanel();
   }
 
   void _startPendingSession() {
@@ -1032,7 +984,7 @@ class ChatInputState extends ConsumerState<ChatInput> {
   @override
   void dispose() {
     _hideCommandPanel();
-    _hideAtFileOverlay();
+    _hideFilePanel();
     _atDebounceTimer?.cancel();
     _controller.removeListener(_onTextChanged);
     _controller.dispose();
@@ -2023,107 +1975,6 @@ class _AgentSelectionSheet extends StatelessWidget {
               },
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─── @ 文件建议列表 Widget ────────────────────────────────────────
-
-class _AtFileSuggestionList extends StatelessWidget {
-  final List<String> results;
-  final int highlightIndex;
-  final double maxHeight;
-  final ValueChanged<String> onSelect;
-
-  const _AtFileSuggestionList({
-    required this.results,
-    required this.highlightIndex,
-    required this.maxHeight,
-    required this.onSelect,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    if (results.isEmpty) return const SizedBox.shrink();
-    final theme = Theme.of(context);
-    final tokens = context.tokens;
-
-    return Material(
-      elevation: 8,
-      borderRadius: BorderRadius.circular(10),
-      color: theme.colorScheme.surface,
-      child: ConstrainedBox(
-        constraints: BoxConstraints(maxHeight: maxHeight),
-        child: ListView.separated(
-          shrinkWrap: true,
-          padding: const EdgeInsets.symmetric(vertical: 6),
-          itemCount: results.length,
-          separatorBuilder: (_, _) =>
-              Divider(height: 1, color: tokens.border.withValues(alpha: 0.4)),
-          itemBuilder: (ctx, i) {
-            final path = results[i];
-            final isHighlighted = i == highlightIndex;
-            final filename = path.split('/').last;
-            final dir = path.contains('/')
-                ? path.substring(0, path.lastIndexOf('/'))
-                : null;
-
-            return GestureDetector(
-              // Use onTapDown + onTap to avoid defocusing the text field.
-              behavior: HitTestBehavior.opaque,
-              onTap: () => onSelect(path),
-              child: Container(
-                color: isHighlighted
-                    ? theme.colorScheme.primary.withValues(alpha: 0.1)
-                    : theme.colorScheme.surface.withValues(alpha: 0),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 10,
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.insert_drive_file_outlined,
-                      size: 16,
-                      color: isHighlighted
-                          ? theme.colorScheme.primary
-                          : tokens.mutedForeground,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: RichText(
-                        overflow: TextOverflow.ellipsis,
-                        text: TextSpan(
-                          children: [
-                            TextSpan(
-                              text: filename,
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: isHighlighted
-                                    ? theme.colorScheme.primary
-                                    : theme.colorScheme.onSurface,
-                              ),
-                            ),
-                            if (dir != null)
-                              TextSpan(
-                                text: '  $dir',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: tokens.mutedForeground,
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
         ),
       ),
     );

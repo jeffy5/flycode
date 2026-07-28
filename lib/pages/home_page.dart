@@ -15,6 +15,7 @@ import '../theme/app_tokens.dart';
 import '../widgets/message/message_list.dart';
 import '../widgets/message/chat_input.dart';
 import '../widgets/message/chat_command_popup.dart';
+import '../widgets/message/chat_file_popup.dart';
 import '../widgets/permission/session_permission_dock.dart';
 import '../widgets/question/question_card.dart';
 import '../widgets/session/todo_list_widget.dart';
@@ -55,6 +56,7 @@ class MyHomePage extends ConsumerStatefulWidget {
 class _MyHomePageState extends ConsumerState<MyHomePage> {
   final CommandPanelController _commandPanelController =
       CommandPanelController();
+  final FilePanelController _filePanelController = FilePanelController();
   final GlobalKey<ChatInputState> _chatInputKey = GlobalKey<ChatInputState>();
   late final ProviderSubscription<bool> _commandPanelAvailabilitySubscription;
 
@@ -66,10 +68,11 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
         (state) => state.canShowCommandPanel,
       ),
       (previous, next) {
-        if (next || !_commandPanelController.visible) {
+        if (next) {
           return;
         }
         _commandPanelController.hide();
+        _filePanelController.hide();
       },
     );
     _scheduleBootstrap();
@@ -227,43 +230,64 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
               children: [
                 Expanded(
                   child: ListenableBuilder(
-                    listenable: _commandPanelController,
-                    builder: (context, _) => Stack(
-                      children: [
-                        Positioned.fill(
-                          child: IgnorePointer(
-                            ignoring: _commandPanelController.visible,
-                            child: buildBodyContent(),
-                          ),
-                        ),
-                        if (selectedSession != null)
-                          Positioned(
-                            top: 8,
-                            left: 0,
-                            right: 0,
+                    listenable: Listenable.merge([
+                      _commandPanelController,
+                      _filePanelController,
+                    ]),
+                    builder: (context, _) {
+                      final panelVisible =
+                          _commandPanelController.visible ||
+                          _filePanelController.visible;
+                      return Stack(
+                        children: [
+                          Positioned.fill(
                             child: IgnorePointer(
-                              ignoring: _commandPanelController.visible,
-                              child: TodoListWidget(
-                                sessionID: selectedSession.id,
+                              ignoring: panelVisible,
+                              child: buildBodyContent(),
+                            ),
+                          ),
+                          if (selectedSession != null)
+                            Positioned(
+                              top: 8,
+                              left: 0,
+                              right: 0,
+                              child: IgnorePointer(
+                                ignoring: panelVisible,
+                                child: TodoListWidget(
+                                  sessionID: selectedSession.id,
+                                ),
+                              ),
+                            ),
+                          Positioned.fill(
+                            child: IgnorePointer(
+                              ignoring: !_commandPanelController.visible,
+                              child: ChatCommandPopup(
+                                controller: _commandPanelController,
+                                onSelect: (command) {
+                                  _chatInputKey.currentState?.insertCommand(
+                                    command,
+                                  );
+                                  _chatInputKey.currentState?.focusInput();
+                                },
                               ),
                             ),
                           ),
-                        Positioned.fill(
-                          child: IgnorePointer(
-                            ignoring: !_commandPanelController.visible,
-                            child: ChatCommandPopup(
-                              controller: _commandPanelController,
-                              onSelect: (command) {
-                                _chatInputKey.currentState?.insertCommand(
-                                  command,
-                                );
-                                _chatInputKey.currentState?.focusInput();
-                              },
+                          Positioned.fill(
+                            child: IgnorePointer(
+                              ignoring: !_filePanelController.visible,
+                              child: ChatFilePopup(
+                                controller: _filePanelController,
+                                onSelect: (path) {
+                                  _chatInputKey.currentState
+                                      ?.insertFileSuggestion(path);
+                                  _chatInputKey.currentState?.focusInput();
+                                },
+                              ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
+                        ],
+                      );
+                    },
                   ),
                 ),
                 if (selectedSession != null &&
@@ -273,6 +297,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
                   ChatInput(
                     key: _chatInputKey,
                     commandPanelController: _commandPanelController,
+                    filePanelController: _filePanelController,
                   ),
               ],
             ),
@@ -308,6 +333,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
   void dispose() {
     _commandPanelAvailabilitySubscription.close();
     _commandPanelController.dispose();
+    _filePanelController.dispose();
     super.dispose();
   }
 }
