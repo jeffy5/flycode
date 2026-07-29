@@ -200,6 +200,12 @@ class ChatInputState extends ConsumerState<ChatInput> {
     );
   }
 
+  void _confirmFirstCommandSuggestion() {
+    final commands = widget.commandPanelController?.filteredCommands;
+    if (commands == null || commands.isEmpty) return;
+    insertCommand(commands.first);
+  }
+
   void focusInput() {
     _focusNode.requestFocus();
   }
@@ -267,6 +273,16 @@ class ChatInputState extends ConsumerState<ChatInput> {
       }
       if (event.logicalKey == LogicalKeyboardKey.escape) {
         _hideFilePanel();
+        return KeyEventResult.handled;
+      }
+    }
+
+    // Keep command completion ahead of the regular Enter-to-send behavior.
+    if (widget.commandPanelController?.visible ?? false) {
+      if (event.logicalKey == LogicalKeyboardKey.enter ||
+          event.logicalKey == LogicalKeyboardKey.numpadEnter ||
+          event.logicalKey == LogicalKeyboardKey.tab) {
+        _confirmFirstCommandSuggestion();
         return KeyEventResult.handled;
       }
     }

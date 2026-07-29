@@ -1,8 +1,36 @@
 import 'package:flycode/service/api/models/command.dart';
+import 'package:flycode/l10n/app_localizations.dart';
+import 'package:flycode/providers/agent_provider.dart';
+import 'package:flycode/providers/chat_config_provider.dart';
+import 'package:flycode/providers/provider_list_provider.dart';
+import 'package:flycode/providers/session_status_provider.dart';
+import 'package:flycode/service/api/command_api.dart';
+import 'package:flycode/service/api/models/message.dart';
+import 'package:flycode/service/api/models/provider.dart';
+import 'package:flycode/service/api/models/session_status.dart';
 import 'package:flycode/theme/app_theme.dart';
 import 'package:flycode/widgets/message/chat_command_popup.dart';
+import 'package:flycode/widgets/message/chat_input.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+final _emptyProviderList = ProviderListResponse(
+  all: <ProviderModel>[],
+  defaultProvider: <String, String>{},
+  connected: <String>[],
+);
+
+class _FakeProviderListNotifier extends ProviderList {
+  @override
+  Future<ProviderListResponse> build() async => _emptyProviderList;
+}
+
+class _FakeSessionStatusNotifier extends SessionStatusNotifier {
+  @override
+  Map<String, SessionStatus> build() => const {};
+}
 
 void main() {
   Widget buildHarness({required Brightness brightness, required Widget child}) {
@@ -36,6 +64,31 @@ void main() {
     template: 'template',
     hints: <String>[],
   );
+
+  const retryCommand = Command(
+    name: 'retry',
+    description: 'retry the last request',
+    template: 'template',
+    hints: <String>[],
+  );
+
+  Widget buildChatInputHarness({
+    required ProviderContainer container,
+    required CommandPanelController commandPanelController,
+  }) {
+    return UncontrolledProviderScope(
+      container: container,
+      child: MaterialApp(
+        theme: AppTheme.light(),
+        locale: const Locale('zh'),
+        supportedLocales: AppLocalizations.supportedLocales,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        home: Scaffold(
+          body: ChatInput(commandPanelController: commandPanelController),
+        ),
+      ),
+    );
+  }
 
   List<Command> manyCommands() => List<Command>.generate(
     8,
@@ -129,6 +182,60 @@ void main() {
 
     expect(selected?.name, 'review');
   });
+
+  for (final keyCase in <(String, LogicalKeyboardKey)>[
+    ('Enter', LogicalKeyboardKey.enter),
+    ('Tab', LogicalKeyboardKey.tab),
+  ]) {
+    testWidgets('${keyCase.$1} completes the first matching command', (
+      tester,
+    ) async {
+      final commandPanelController = CommandPanelController();
+      final container = ProviderContainer(
+        overrides: [
+          commandsProvider.overrideWith(
+            (ref) async => const [initCommand, reviewCommand, retryCommand],
+          ),
+          agentsProvider.overrideWith((ref) async => const []),
+          providerListProvider.overrideWith(_FakeProviderListNotifier.new),
+          chatConfigProvider.overrideWithValue(
+            ChatConfig(
+              agent: 'build',
+              model: MessageModel(providerID: 'test', modelID: 'test'),
+            ),
+          ),
+          sessionStatusProvider.overrideWith(_FakeSessionStatusNotifier.new),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        buildChatInputHarness(
+          container: container,
+          commandPanelController: commandPanelController,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final inputFinder = find.byType(TextField);
+      await tester.enterText(inputFinder, '/r');
+      await tester.pump();
+
+      expect(commandPanelController.filteredCommands, const [
+        reviewCommand,
+        retryCommand,
+      ]);
+      expect(commandPanelController.visible, isTrue);
+
+      await tester.sendKeyEvent(keyCase.$2);
+      await tester.pump();
+
+      final input = tester.widget<TextField>(inputFinder);
+      expect(input.controller?.text, '/review ');
+      expect(input.focusNode?.hasFocus, isTrue);
+      expect(commandPanelController.visible, isFalse);
+    });
+  }
 
   testWidgets('initial popup height stays near four rows', (tester) async {
     await tester.pumpWidget(
