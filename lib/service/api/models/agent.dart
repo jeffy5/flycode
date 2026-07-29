@@ -36,6 +36,7 @@ class Agent {
 
   /// Optional default model bound to this agent.
   final AgentModel? model;
+  final String? variant;
 
   const Agent({
     required this.name,
@@ -44,6 +45,7 @@ class Agent {
     this.hidden = false,
     this.color,
     this.model,
+    this.variant,
   });
 
   factory Agent.fromJson(Map<String, dynamic> json) {
@@ -58,6 +60,7 @@ class Agent {
       hidden: json['hidden'] as bool? ?? false,
       color: json['color'] as String?,
       model: model,
+      variant: json['variant'] as String? ?? model?.variant,
     );
   }
 
@@ -68,5 +71,6 @@ class Agent {
     'hidden': hidden,
     'color': color,
     'model': model?.toJson(),
+    if (variant != null) 'variant': variant,
   };
 }

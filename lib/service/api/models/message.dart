@@ -323,6 +323,7 @@ class UserMessage {
   final UserMessageSummary? summary;
   final String agent;
   final MessageModel model;
+  final String? variant;
   final String? system;
   final Map<String, bool>? tools;
 
@@ -334,6 +335,7 @@ class UserMessage {
     this.summary,
     required this.agent,
     required this.model,
+    this.variant,
     this.system,
     this.tools,
   });
@@ -348,6 +350,7 @@ class UserMessage {
         : UserMessageSummary.fromJson(json['summary'] as Map<String, dynamic>),
     agent: json['agent'] as String,
     model: MessageModel.fromJson(json['model'] as Map<String, dynamic>),
+    variant: (json['model'] as Map<String, dynamic>)['variant'] as String?,
     system: json['system'] as String?,
     tools: json['tools'] == null
         ? null
@@ -362,7 +365,7 @@ class UserMessage {
     'time': time.toJson(),
     if (summary != null) 'summary': summary?.toJson(),
     'agent': agent,
-    'model': model.toJson(),
+    'model': {...model.toJson(), if (variant != null) 'variant': variant},
     if (system != null) 'system': system,
     if (tools != null) 'tools': tools,
   };
@@ -378,6 +381,8 @@ class AssistantMessage {
   final String parentID;
   final String modelID;
   final String providerID;
+  final String? agent;
+  final String? variant;
   final String mode;
   final MessagePath path;
   final bool? summary;
@@ -394,6 +399,8 @@ class AssistantMessage {
     required this.parentID,
     required this.modelID,
     required this.providerID,
+    this.agent,
+    this.variant,
     required this.mode,
     required this.path,
     this.summary,
@@ -414,6 +421,8 @@ class AssistantMessage {
         parentID: json['parentID'] as String,
         modelID: json['modelID'] as String,
         providerID: json['providerID'] as String,
+        agent: json['agent'] as String?,
+        variant: json['variant'] as String?,
         mode: json['mode'] as String,
         path: MessagePath.fromJson(json['path'] as Map<String, dynamic>),
         summary: json['summary'] as bool?,
@@ -430,6 +439,8 @@ class AssistantMessage {
     'parentID': parentID,
     'modelID': modelID,
     'providerID': providerID,
+    if (agent != null) 'agent': agent,
+    if (variant != null) 'variant': variant,
     'mode': mode,
     'path': path.toJson(),
     if (summary != null) 'summary': summary,

@@ -24,7 +24,11 @@ void main() {
           ],
         },
         'agent': 'codex',
-        'model': {'providerID': 'openai', 'modelID': 'gpt-5.4'},
+        'model': {
+          'providerID': 'openai',
+          'modelID': 'gpt-5.4',
+          'variant': 'high',
+        },
       },
       'parts': const [],
     });
@@ -38,6 +42,32 @@ void main() {
     expect(diff.additions, 0);
     expect(diff.deletions, 0);
     expect(diff.status, 'modified');
+    expect(info.variant, 'high');
+    expect((info.toJson()['model'] as Map<String, dynamic>)['variant'], 'high');
+  });
+
+  test('parses assistant agent and variant configuration', () {
+    final message = msg.MessageWithParts.fromJson({
+      'info': {
+        'id': 'assistant-1',
+        'sessionID': 'session-1',
+        'role': 'assistant',
+        'time': {'created': 2},
+        'parentID': 'message-1',
+        'modelID': 'gpt-5.4',
+        'providerID': 'openai',
+        'agent': 'plan',
+        'variant': 'high',
+        'mode': 'plan',
+        'path': {'cwd': '/tmp/project', 'root': '/tmp/project'},
+        'tokens': <String, dynamic>{},
+      },
+      'parts': const [],
+    });
+
+    final info = message.info as msg.AssistantMessage;
+    expect(info.agent, 'plan');
+    expect(info.variant, 'high');
   });
 
   test('parses session diff payload with filePath fallback', () {
