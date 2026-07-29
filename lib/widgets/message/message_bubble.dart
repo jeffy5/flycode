@@ -350,6 +350,7 @@ class _MessageBubbleState extends ConsumerState<MessageBubble> {
     final lastTextPartIndex = parts.lastIndexWhere(
       (p) => p is TextPart && p.synthetic != true && p.text.isNotEmpty,
     );
+    final imagePreviewContexts = _buildImagePreviewContexts(parts);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
@@ -376,6 +377,9 @@ class _MessageBubbleState extends ConsumerState<MessageBubble> {
                       isExpanded,
                     )
                   : null,
+              imagePreviewUrls: imagePreviewContexts[i]?.urls,
+              imagePreviewInitialIndex:
+                  imagePreviewContexts[i]?.initialIndex ?? 0,
             ),
             if (i == lastTextPartIndex) ...[
               const SizedBox(height: 6),
@@ -391,6 +395,43 @@ class _MessageBubbleState extends ConsumerState<MessageBubble> {
       ),
     );
   }
+
+  Map<int, _ImagePreviewContext> _buildImagePreviewContexts(
+    List<Object> parts,
+  ) {
+    final contexts = <int, _ImagePreviewContext>{};
+    var partIndex = 0;
+
+    while (partIndex < parts.length) {
+      if (!_isImageFilePart(parts[partIndex])) {
+        partIndex += 1;
+        continue;
+      }
+
+      final startIndex = partIndex;
+      final urls = <String>[];
+      while (partIndex < parts.length && _isImageFilePart(parts[partIndex])) {
+        urls.add((parts[partIndex] as FilePart).url);
+        partIndex += 1;
+      }
+
+      for (var imageIndex = 0; imageIndex < urls.length; imageIndex++) {
+        contexts[startIndex + imageIndex] = _ImagePreviewContext(
+          urls: urls,
+          initialIndex: imageIndex,
+        );
+      }
+    }
+
+    return contexts;
+  }
+}
+
+class _ImagePreviewContext {
+  final List<String> urls;
+  final int initialIndex;
+
+  const _ImagePreviewContext({required this.urls, required this.initialIndex});
 }
 
 // ─── Assistant footer & Copy Button ──────────────────────────────────────────

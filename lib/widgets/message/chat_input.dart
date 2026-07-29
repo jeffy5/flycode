@@ -34,6 +34,7 @@ import '../../theme/app_tokens.dart';
 import 'at_mention_controller.dart';
 import 'chat_command_popup.dart';
 import 'chat_file_popup.dart';
+import 'image_preview_dialog.dart';
 import 'model_selection_sheet.dart';
 
 class _ImageAttachment {
@@ -446,40 +447,16 @@ class ChatInputState extends ConsumerState<ChatInput> {
     });
   }
 
-  void _showImagePreview(BuildContext context, _ImageAttachment attachment) {
-    final theme = Theme.of(context);
-    showDialog<void>(
+  void _showImagePreview(BuildContext context, int initialIndex) {
+    final images = _attachments
+        .map<ImageProvider<Object>>(
+          (attachment) => FileImage(File(attachment.path)),
+        )
+        .toList(growable: false);
+    showImagePreviewDialog(
       context: context,
-      builder: (ctx) => Dialog(
-        backgroundColor: theme.colorScheme.scrim,
-        insetPadding: EdgeInsets.zero,
-        child: Stack(
-          children: [
-            Center(
-              child: InteractiveViewer(
-                child: Image.file(
-                  File(attachment.path),
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) =>
-                      const SizedBox.shrink(),
-                ),
-              ),
-            ),
-            Positioned(
-              top: 16,
-              right: 16,
-              child: IconButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                icon: Icon(
-                  Icons.close,
-                  color: theme.colorScheme.onPrimary,
-                  size: 28,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+      images: images,
+      initialIndex: initialIndex,
     );
   }
 
@@ -932,7 +909,7 @@ class ChatInputState extends ConsumerState<ChatInput> {
                     _AttachmentList(
                       attachments: _attachments,
                       onRemove: _removeAttachment,
-                      onPreview: (att) => _showImagePreview(context, att),
+                      onPreview: (index) => _showImagePreview(context, index),
                     ),
                   TextField(
                     controller: _controller,
@@ -1022,7 +999,7 @@ class ChatInputState extends ConsumerState<ChatInput> {
 class _AttachmentList extends StatelessWidget {
   final List<_ImageAttachment> attachments;
   final ValueChanged<int> onRemove;
-  final ValueChanged<_ImageAttachment> onPreview;
+  final ValueChanged<int> onPreview;
 
   const _AttachmentList({
     required this.attachments,
@@ -1057,7 +1034,7 @@ class _AttachmentList extends StatelessWidget {
                       left: 0,
                       bottom: 0,
                       child: GestureDetector(
-                        onTap: () => onPreview(att),
+                        onTap: () => onPreview(i),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(6),
                           child: Image.file(

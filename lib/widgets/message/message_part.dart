@@ -7,6 +7,7 @@ import 'package:markdown/markdown.dart' as md;
 import '../../service/api/models/parts.dart';
 import '../../theme/app_tokens.dart';
 import 'code_block_widget.dart';
+import 'image_preview_dialog.dart';
 import 'message_markdown_theme.dart';
 import 'tool_use_widget.dart';
 
@@ -18,6 +19,8 @@ class MessagePart extends StatelessWidget {
   final void Function(String sessionId)? onNavigateToSubSession;
   final bool? toolIsExpanded;
   final ValueChanged<bool>? onToolExpandedChanged;
+  final List<String>? imagePreviewUrls;
+  final int imagePreviewInitialIndex;
 
   const MessagePart({
     super.key,
@@ -28,6 +31,8 @@ class MessagePart extends StatelessWidget {
     this.onNavigateToSubSession,
     this.toolIsExpanded,
     this.onToolExpandedChanged,
+    this.imagePreviewUrls,
+    this.imagePreviewInitialIndex = 0,
   });
 
   @override
@@ -60,7 +65,11 @@ class MessagePart extends StatelessWidget {
       if (filePart.mime.startsWith('image/')) {
         return Padding(
           padding: const EdgeInsets.only(top: 4),
-          child: _ImagePartWidget(url: filePart.url),
+          child: _ImagePartWidget(
+            url: filePart.url,
+            previewUrls: imagePreviewUrls,
+            initialIndex: imagePreviewInitialIndex,
+          ),
         );
       }
     }
@@ -658,15 +667,22 @@ class _CompactionDivider extends StatelessWidget {
 class _ImagePartWidget extends StatefulWidget {
   final String url;
   final double size;
+  final List<String>? previewUrls;
+  final int initialIndex;
 
-  const _ImagePartWidget({required this.url, this.size = 200});
+  const _ImagePartWidget({
+    required this.url,
+    this.size = 200,
+    this.previewUrls,
+    this.initialIndex = 0,
+  });
 
   @override
   State<_ImagePartWidget> createState() => _ImagePartWidgetState();
 }
 
 class _ImagePartWidgetState extends State<_ImagePartWidget> {
-  late ImageProvider _imageProvider;
+  late ImageProvider<Object> _imageProvider;
 
   @override
   void initState() {
@@ -682,7 +698,7 @@ class _ImagePartWidgetState extends State<_ImagePartWidget> {
     }
   }
 
-  ImageProvider _buildImageProvider(String url) {
+  ImageProvider<Object> _buildImageProvider(String url) {
     if (!url.startsWith('data:')) {
       return NetworkImage(url);
     }
@@ -694,36 +710,19 @@ class _ImagePartWidgetState extends State<_ImagePartWidget> {
     return MemoryImage(base64Decode(base64Data));
   }
 
-  void _showFullscreen(BuildContext context, ImageProvider imageProvider) {
-    final theme = Theme.of(context);
-
-    showDialog<void>(
+  void _showFullscreen(BuildContext context) {
+    final previewUrls = widget.previewUrls ?? [widget.url];
+    final images = <ImageProvider<Object>>[
+      for (var index = 0; index < previewUrls.length; index++)
+        if (index == widget.initialIndex && previewUrls[index] == widget.url)
+          _imageProvider
+        else
+          _buildImageProvider(previewUrls[index]),
+    ];
+    showImagePreviewDialog(
       context: context,
-      builder: (ctx) => Dialog(
-        backgroundColor: theme.colorScheme.scrim,
-        insetPadding: EdgeInsets.zero,
-        child: Stack(
-          children: [
-            Center(
-              child: InteractiveViewer(
-                child: Image(image: imageProvider, fit: BoxFit.contain),
-              ),
-            ),
-            Positioned(
-              top: 16,
-              right: 16,
-              child: IconButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                icon: Icon(
-                  Icons.close,
-                  color: theme.colorScheme.onPrimary,
-                  size: 28,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+      images: images,
+      initialIndex: widget.initialIndex,
     );
   }
 
@@ -732,7 +731,7 @@ class _ImagePartWidgetState extends State<_ImagePartWidget> {
     final tokens = context.tokens;
 
     return GestureDetector(
-      onTap: () => _showFullscreen(context, _imageProvider),
+      onTap: () => _showFullscreen(context),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(6),
         child: Image(
@@ -763,6 +762,9 @@ class MessageImageGallery extends StatelessWidget {
     if (images.isEmpty) {
       return const SizedBox.shrink();
     }
+    final previewUrls = images
+        .map((image) => image.url)
+        .toList(growable: false);
 
     return Padding(
       padding: const EdgeInsets.only(top: 4),
@@ -780,6 +782,8 @@ class MessageImageGallery extends StatelessWidget {
                 child: _ImagePartWidget(
                   url: images[index].url,
                   size: kMessageImageThumbnailSize,
+                  previewUrls: previewUrls,
+                  initialIndex: index,
                 ),
               ),
             ],
