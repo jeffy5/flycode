@@ -735,7 +735,11 @@ class ChatInputState extends ConsumerState<ChatInput> {
     final next = agents[nextIdx];
     ref
         .read(chatConfigProvider.notifier)
-        .setAgent(next.name, linkedModel: next.model);
+        .setAgent(
+          next.name,
+          linkedModel: next.model,
+          linkedVariant: next.variant,
+        );
   }
 
   /// Shows a bottom sheet for selecting an agent (used when > 3 agents).
@@ -752,7 +756,11 @@ class ChatInputState extends ConsumerState<ChatInput> {
         onSelect: (agent) {
           ref
               .read(chatConfigProvider.notifier)
-              .setAgent(agent.name, linkedModel: agent.model);
+              .setAgent(
+                agent.name,
+                linkedModel: agent.model,
+                linkedVariant: agent.variant,
+              );
           Navigator.of(context).pop();
         },
       ),

@@ -13,6 +13,7 @@ import 'package:flycode/service/api/models/message.dart';
 import 'package:flycode/service/api/models/provider.dart';
 
 const _kVariantCacheKey = 'chat_config_model_variants';
+const _kConfigCacheKey = 'chat_config_last_used_model';
 
 ProviderListResponse _fakeProviderList = ProviderListResponse(
   all: <ProviderModel>[],
@@ -30,6 +31,15 @@ ProviderContainer _makeContainer(ChatConfig config) {
   return ProviderContainer(
     overrides: [
       chatConfigProvider.overrideWithValue(config),
+      providerListProvider.overrideWith(_FakeProviderListNotifier.new),
+      agentsProvider.overrideWith((ref) async => _fakeAgents),
+    ],
+  );
+}
+
+ProviderContainer _makeIntegratedContainer() {
+  return ProviderContainer(
+    overrides: [
       providerListProvider.overrideWith(_FakeProviderListNotifier.new),
       agentsProvider.overrideWith((ref) async => _fakeAgents),
     ],
@@ -121,15 +131,14 @@ void main() {
     expect(cycleVariant(variants, 'fast'), isNull);
   });
 
-  test('restores model-level variant from shared preferences', () async {
-    SharedPreferences.setMockInitialValues(<String, Object>{
-      _kVariantCacheKey: jsonEncode(<String, String>{'p1/m1': 'fast'}),
-    });
+  test('derives selected variant from the active chat config', () async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
 
     final container = _makeContainer(
       ChatConfig(
         agent: 'build',
         model: MessageModel(providerID: 'p1', modelID: 'm1'),
+        variant: 'fast',
       ),
     );
     addTearDown(container.dispose);
@@ -148,13 +157,60 @@ void main() {
     expect(state.current, 'fast');
   });
 
-  test('writes selected variant to per-model cache', () async {
+  test(
+    'writes selected variant to unified config and per-model cache',
+    () async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        _kConfigCacheKey: jsonEncode(<String, dynamic>{
+          'agent': 'build',
+          'model': <String, String>{'providerID': 'p1', 'modelID': 'm1'},
+          'variant': null,
+        }),
+      });
+
+      final container = _makeIntegratedContainer();
+      addTearDown(container.dispose);
+
+      final configSub = container.listen<ChatConfig>(
+        chatConfigProvider,
+        (previous, next) {},
+        fireImmediately: true,
+      );
+      addTearDown(configSub.close);
+      final sub = container.listen<ModelVariantState>(
+        modelVariantProvider,
+        (previous, next) {},
+        fireImmediately: true,
+      );
+      addTearDown(sub.close);
+      await _flushAsyncWork();
+
+      container
+          .read(modelVariantProvider.notifier)
+          .setSelectedForCurrentModel('thinking');
+      await _flushAsyncWork();
+
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_kVariantCacheKey);
+      final map = jsonDecode(raw ?? '{}') as Map<String, dynamic>;
+      final config =
+          jsonDecode(prefs.getString(_kConfigCacheKey) ?? '{}')
+              as Map<String, dynamic>;
+
+      expect(map['p1/m1'], 'thinking');
+      expect(config['variant'], 'thinking');
+      expect(container.read(chatConfigProvider).variant, 'thinking');
+      expect(container.read(modelVariantProvider).current, 'thinking');
+    },
+  );
+
+  test('ignores configured agent variant for a different model', () async {
     SharedPreferences.setMockInitialValues(<String, Object>{});
 
     final container = _makeContainer(
       ChatConfig(
         agent: 'build',
-        model: MessageModel(providerID: 'p1', modelID: 'm1'),
+        model: MessageModel(providerID: 'p1', modelID: 'other-model'),
       ),
     );
     addTearDown(container.dispose);
@@ -167,16 +223,6 @@ void main() {
     addTearDown(sub.close);
     await _flushAsyncWork();
 
-    container
-        .read(modelVariantProvider.notifier)
-        .setSelectedForCurrentModel('thinking');
-    await _flushAsyncWork();
-
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_kVariantCacheKey);
-    final map = jsonDecode(raw ?? '{}') as Map<String, dynamic>;
-
-    expect(map['p1/m1'], 'thinking');
-    expect(container.read(modelVariantProvider).current, 'thinking');
+    expect(container.read(modelVariantProvider).configured, isNull);
   });
 }

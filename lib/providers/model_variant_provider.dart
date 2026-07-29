@@ -1,6 +1,3 @@
-import 'dart:async';
-import 'dart:convert';
-
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../service/api/models/agent.dart';
@@ -9,11 +6,8 @@ import '../service/api/models/provider.dart';
 import 'agent_provider.dart';
 import 'chat_config_provider.dart';
 import 'provider_list_provider.dart';
-import 'shared_preferences_provider.dart';
 
 part 'model_variant_provider.g.dart';
-
-const _kModelVariantCacheKey = 'chat_config_model_variants';
 
 String buildModelKey(MessageModel model) {
   return '${model.providerID}/${model.modelID}';
@@ -51,7 +45,6 @@ String? cycleVariant(List<String> variants, String? current) {
 class ModelVariantState {
   final String modelKey;
   final List<String> available;
-  final Map<String, String> selectedByModel;
   final String? selected;
   final String? configured;
   final String? current;
@@ -59,7 +52,6 @@ class ModelVariantState {
   const ModelVariantState({
     required this.modelKey,
     required this.available,
-    required this.selectedByModel,
     required this.selected,
     required this.configured,
     required this.current,
@@ -68,133 +60,35 @@ class ModelVariantState {
 
 @riverpod
 class ModelVariant extends _$ModelVariant {
-  final Map<String, String> _selectedByModel = <String, String>{};
-  bool _restored = false;
-
   @override
   ModelVariantState build() {
     final chatConfig = ref.watch(chatConfigProvider);
     final providerList = ref.watch(providerListProvider).asData?.value;
     final agents = ref.watch(agentsProvider).asData?.value ?? const <Agent>[];
+    final available = _availableVariants(providerList, chatConfig.model);
+    final configured = _configuredVariant(agents, chatConfig);
 
-    if (!_restored) {
-      _restored = true;
-      unawaited(_restoreSelections());
-    }
-
-    final nextState = _stateFromContext(
-      chatConfig: chatConfig,
-      providerList: providerList,
-      agents: agents,
+    return ModelVariantState(
+      modelKey: buildModelKey(chatConfig.model),
+      available: available,
+      selected: chatConfig.variant,
+      configured: configured,
+      current: resolveVariant(
+        variants: available,
+        selected: chatConfig.variant,
+        configured: configured,
+      ),
     );
-
-    final selected = nextState.selected;
-    if (selected != null && !nextState.available.contains(selected)) {
-      _selectedByModel.remove(nextState.modelKey);
-      unawaited(_persistSelections());
-      return ModelVariantState(
-        modelKey: nextState.modelKey,
-        available: nextState.available,
-        selectedByModel: Map<String, String>.from(_selectedByModel),
-        selected: null,
-        configured: nextState.configured,
-        current: resolveVariant(
-          variants: nextState.available,
-          selected: null,
-          configured: nextState.configured,
-        ),
-      );
-    }
-
-    return nextState;
   }
 
   void setSelectedForCurrentModel(String? variant) {
-    final modelKey = state.modelKey;
-    if (variant == null || variant.trim().isEmpty) {
-      _selectedByModel.remove(modelKey);
-    } else {
-      if (!state.available.contains(variant)) return;
-      _selectedByModel[modelKey] = variant;
-    }
-
-    _recomputeState();
-    unawaited(_persistSelections());
+    if (variant != null && !state.available.contains(variant)) return;
+    ref.read(chatConfigProvider.notifier).setVariant(variant);
   }
 
   void cycleForCurrentModel() {
     final next = cycleVariant(state.available, state.current);
     setSelectedForCurrentModel(next);
-  }
-
-  Future<void> _restoreSelections() async {
-    final prefs = await ref.read(sharedPreferencesProvider.future);
-    final raw = prefs.getString(_kModelVariantCacheKey);
-    if (raw == null || raw.trim().isEmpty) return;
-
-    try {
-      final json = jsonDecode(raw);
-      if (json is! Map<String, dynamic>) return;
-      _selectedByModel
-        ..clear()
-        ..addEntries(
-          json.entries
-              .where((entry) {
-                return entry.key.isNotEmpty &&
-                    entry.value is String &&
-                    (entry.value as String).isNotEmpty;
-              })
-              .map((entry) {
-                return MapEntry(entry.key, entry.value as String);
-              }),
-        );
-      if (!ref.mounted) return;
-      _recomputeState();
-    } catch (_) {
-      // Ignore invalid cached payload.
-    }
-  }
-
-  Future<void> _persistSelections() async {
-    final prefs = await ref.read(sharedPreferencesProvider.future);
-    await prefs.setString(_kModelVariantCacheKey, jsonEncode(_selectedByModel));
-  }
-
-  void _recomputeState() {
-    if (!ref.mounted) return;
-    final chatConfig = ref.read(chatConfigProvider);
-    final providerList = ref.read(providerListProvider).asData?.value;
-    final agents = ref.read(agentsProvider).asData?.value ?? const <Agent>[];
-    state = _stateFromContext(
-      chatConfig: chatConfig,
-      providerList: providerList,
-      agents: agents,
-    );
-  }
-
-  ModelVariantState _stateFromContext({
-    required ChatConfig chatConfig,
-    required ProviderListResponse? providerList,
-    required List<Agent> agents,
-  }) {
-    final modelKey = buildModelKey(chatConfig.model);
-    final available = _availableVariants(providerList, chatConfig.model);
-    final selected = _selectedByModel[modelKey];
-    final configured = _configuredVariant(agents, chatConfig.agent);
-    final current = resolveVariant(
-      variants: available,
-      selected: selected,
-      configured: configured,
-    );
-
-    return ModelVariantState(
-      modelKey: modelKey,
-      available: available,
-      selectedByModel: Map<String, String>.from(_selectedByModel),
-      selected: selected,
-      configured: configured,
-      current: current,
-    );
   }
 
   List<String> _availableVariants(
@@ -204,20 +98,23 @@ class ModelVariant extends _$ModelVariant {
     if (providerList == null) return const <String>[];
     for (final provider in providerList.all) {
       if (provider.id != model.providerID) continue;
-      final modelInfo = provider.models[model.modelID];
-      if (modelInfo == null) return const <String>[];
-      final variants = modelInfo.variants;
+      final variants = provider.models[model.modelID]?.variants;
       if (variants == null || variants.isEmpty) return const <String>[];
       return variants.keys.toList();
     }
     return const <String>[];
   }
 
-  String? _configuredVariant(List<Agent> agents, String agentName) {
+  String? _configuredVariant(List<Agent> agents, ChatConfig chatConfig) {
     for (final agent in agents) {
-      if (agent.name == agentName) {
-        return agent.model?.variant;
+      if (agent.name != chatConfig.agent) continue;
+      final model = agent.model;
+      if (model == null ||
+          model.providerID != chatConfig.model.providerID ||
+          model.modelID != chatConfig.model.modelID) {
+        return null;
       }
+      return agent.variant ?? model.variant;
     }
     return null;
   }
