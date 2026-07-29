@@ -208,9 +208,11 @@
   "sessionContextCreatedAt": "Created At",
   "sessionContextLastActive": "Last Active",
   "sessionDiffTitle": "File Changes",
+  "sessionDiffModeGit": "Git",
+  "sessionDiffModeBranch": "Branch",
   "sessionDiffLoadFailed": "Load failed",
   "sessionDiffEmptyTitle": "No file changes",
-  "sessionDiffEmptySubtitle": "No file changes were produced in this session",
+  "sessionDiffEmptySubtitle": "No file changes found for this mode",
   "sessionDiffFilesCount": "{count} files",
   "@sessionDiffFilesCount": {
     "placeholders": {

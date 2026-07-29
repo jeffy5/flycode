@@ -13,8 +13,8 @@ extension AppRouteNavigation on BuildContext {
     return push<T>(sessionDiffRoutePath, extra: args);
   }
 
-  Future<T?> pushSessionDiffById<T>(String sessionID) {
-    return pushSessionDiff<T>(SessionDiffRouteArgs(sessionID: sessionID));
+  Future<T?> pushSessionDiffByDirectory<T>(String directory) {
+    return pushSessionDiff<T>(SessionDiffRouteArgs(directory: directory));
   }
 
   Future<T?> pushFileContent<T>(FileContentRouteArgs args) {

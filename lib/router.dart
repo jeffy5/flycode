@@ -85,7 +85,7 @@ final GoRouter appRouter = GoRouter(
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) {
         final args = state.extra as SessionDiffRouteArgs;
-        return SessionDiffPage(sessionID: args.sessionID);
+        return SessionDiffPage(directory: args.directory);
       },
     ),
     GoRoute(

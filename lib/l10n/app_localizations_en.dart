@@ -384,14 +384,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sessionDiffTitle => 'File Changes';
 
   @override
+  String get sessionDiffModeGit => 'Git';
+
+  @override
+  String get sessionDiffModeBranch => 'Branch';
+
+  @override
   String get sessionDiffLoadFailed => 'Load failed';
 
   @override
   String get sessionDiffEmptyTitle => 'No file changes';
 
   @override
-  String get sessionDiffEmptySubtitle =>
-      'No file changes were produced in this session';
+  String get sessionDiffEmptySubtitle => 'No file changes found for this mode';
 
   @override
   String sessionDiffFilesCount(int count) {

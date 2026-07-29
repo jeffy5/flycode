@@ -209,19 +209,6 @@ class SessionApi {
     );
   }
 
-  Future<List<FileDiff>> getSessionDiff(String id, {String? directory}) async {
-    final queryParams = <String, String>{};
-    if (directory != null) queryParams['directory'] = directory;
-
-    final List<dynamic> json = await _client.get(
-      '/session/$id/diff',
-      queryParameters: queryParams,
-    );
-    return json
-        .map((e) => FileDiff.fromJson(e as Map<String, dynamic>))
-        .toList();
-  }
-
   Future<void> forkSession(
     String id, {
     String? directory,

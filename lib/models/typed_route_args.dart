@@ -1,7 +1,7 @@
 class SessionDiffRouteArgs {
-  const SessionDiffRouteArgs({required this.sessionID});
+  const SessionDiffRouteArgs({required this.directory});
 
-  final String sessionID;
+  final String directory;
 }
 
 class FileContentRouteArgs {

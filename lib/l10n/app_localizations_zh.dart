@@ -368,13 +368,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sessionDiffTitle => '文件变更';
 
   @override
+  String get sessionDiffModeGit => 'Git';
+
+  @override
+  String get sessionDiffModeBranch => 'Branch';
+
+  @override
   String get sessionDiffLoadFailed => '加载失败';
 
   @override
   String get sessionDiffEmptyTitle => '暂无文件变更';
 
   @override
-  String get sessionDiffEmptySubtitle => '本次会话未产生任何文件改动';
+  String get sessionDiffEmptySubtitle => '当前模式下暂无文件变更';
 
   @override
   String sessionDiffFilesCount(int count) {
