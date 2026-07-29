@@ -3,7 +3,7 @@
 import 'package:flycode/l10n/app_localizations.dart';
 import 'package:flycode/service/api/api_client.dart';
 import 'package:flycode/service/api/models/message.dart';
-import 'package:flycode/service/api/models/parts.dart';
+import 'package:flycode/service/api/models/parts.dart' hide MessageTokens;
 import 'package:flycode/service/api/models/provider.dart';
 import 'package:flycode/service/api/provider_api.dart';
 import 'package:flycode/theme/app_theme.dart';
@@ -66,6 +66,24 @@ MessageWithParts _userMessageWithParts(List<Object> parts) {
       time: MessageTime(created: 1),
       agent: 'build',
       model: MessageModel(providerID: 'openai', modelID: 'gpt-5.4'),
+    ),
+    parts: parts,
+  );
+}
+
+MessageWithParts _assistantMessageWithParts(List<Object> parts) {
+  return MessageWithParts(
+    info: AssistantMessage(
+      id: 'message-1',
+      sessionID: 'session-1',
+      role: 'assistant',
+      time: MessageTime(created: 1, completed: 2),
+      parentID: 'parent-1',
+      modelID: 'gpt-5.4',
+      providerID: 'openai',
+      mode: 'chat',
+      path: MessagePath(cwd: '/workspace', root: '/workspace'),
+      tokens: MessageTokens(),
     ),
     parts: parts,
   );
@@ -155,5 +173,31 @@ void main() {
       find.byKey(kMessageImageGalleryKey).first,
     );
     expect(gallerySize.width, (kMessageImageThumbnailSize * 2) + 4);
+
+    await tester.tap(find.byKey(const ValueKey('image-2')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('2 / 2'), findsOneWidget);
+    expect(find.textContaining('/ 3'), findsNothing);
+  });
+
+  testWidgets('previews consecutive assistant images as one group', (
+    tester,
+  ) async {
+    final message = _assistantMessageWithParts([
+      _textPart('text-1', '第一段'),
+      _imagePart('image-1'),
+      _imagePart('image-2'),
+    ]);
+
+    await tester.pumpWidget(
+      _buildHarness(MessageBubble(messageWithParts: message, prevIsUser: true)),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byType(Image).at(1));
+    await tester.pumpAndSettle();
+
+    expect(find.text('2 / 2'), findsOneWidget);
   });
 }
