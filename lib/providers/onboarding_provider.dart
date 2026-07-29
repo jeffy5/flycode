@@ -10,7 +10,7 @@ Future<bool> serverSetupCompleted(Ref ref) async {
   return repository.loadServerSetupCompleted();
 }
 
-@riverpod
+@Riverpod(keepAlive: true)
 OnboardingController onboardingController(Ref ref) {
   return OnboardingController(ref);
 }
@@ -23,6 +23,8 @@ class OnboardingController {
   Future<void> markServerSetupCompleted() async {
     final repository = _ref.read(localPreferencesRepositoryProvider);
     await repository.saveServerSetupCompleted(true);
-    _ref.invalidate(serverSetupCompletedProvider);
+    if (_ref.mounted) {
+      _ref.invalidate(serverSetupCompletedProvider);
+    }
   }
 }

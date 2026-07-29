@@ -32,6 +32,7 @@ class _ServerConfigPageState extends ConsumerState<ServerConfigPage> {
   late final TextEditingController _passwordController;
 
   bool _isTesting = false;
+  bool _isSaving = false;
   bool _obscurePassword = true;
   bool _testPassed = false;
 
@@ -136,6 +137,7 @@ class _ServerConfigPageState extends ConsumerState<ServerConfigPage> {
   }
 
   Future<void> _save() async {
+    if (_isSaving) return;
     if (!_formKey.currentState!.validate()) return;
     if (widget.onboardingMode && !_testPassed) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -143,6 +145,8 @@ class _ServerConfigPageState extends ConsumerState<ServerConfigPage> {
       );
       return;
     }
+
+    setState(() => _isSaving = true);
 
     final config = ServerConfig(
       baseUrl: _baseUrlController.text.trim(),
@@ -154,20 +158,27 @@ class _ServerConfigPageState extends ConsumerState<ServerConfigPage> {
           : _passwordController.text,
     );
 
-    await ref.read(serverConfigProvider.notifier).save(config);
-    await ref.read(onboardingControllerProvider).markServerSetupCompleted();
+    try {
+      await ref.read(serverConfigProvider.notifier).save(config);
+      if (!mounted) return;
 
-    ref.invalidate(serverConfigProvider);
-    ref.invalidate(projectsProvider);
-    ref.invalidate(sessionsProvider);
-    ref.invalidate(providerListProvider);
+      await ref.read(onboardingControllerProvider).markServerSetupCompleted();
+      if (!mounted) return;
 
-    if (mounted) {
+      ref.invalidate(serverConfigProvider);
+      ref.invalidate(projectsProvider);
+      ref.invalidate(sessionsProvider);
+      ref.invalidate(providerListProvider);
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(context.l10n.serverConfigSaveSuccess)),
       );
       if (widget.onboardingMode) {
         context.go('/');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
       }
     }
   }
@@ -279,7 +290,7 @@ class _ServerConfigPageState extends ConsumerState<ServerConfigPage> {
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: _isTesting ? null : _testConnection,
+                    onPressed: _isTesting || _isSaving ? null : _testConnection,
                     icon: _isTesting
                         ? const SizedBox(
                             width: 16,
@@ -297,8 +308,14 @@ class _ServerConfigPageState extends ConsumerState<ServerConfigPage> {
                 const SizedBox(width: 16),
                 Expanded(
                   child: FilledButton.icon(
-                    onPressed: _save,
-                    icon: const Icon(Icons.save_outlined),
+                    onPressed: _isSaving ? null : _save,
+                    icon: _isSaving
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.save_outlined),
                     label: Text(
                       widget.onboardingMode
                           ? l10n.serverConfigSaveAndEnter

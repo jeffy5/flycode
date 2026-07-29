@@ -60,7 +60,7 @@ final class OnboardingControllerProvider
         argument: null,
         retry: null,
         name: r'onboardingControllerProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -89,4 +89,4 @@ final class OnboardingControllerProvider
 }
 
 String _$onboardingControllerHash() =>
-    r'403d6f43c714442fe66c0922bd3047b943bdd34d';
+    r'4356fccc1e87743d2e99f87fe6337f797df98219';
