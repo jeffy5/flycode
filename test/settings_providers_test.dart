@@ -109,6 +109,34 @@ void main() {
     },
   );
 
+  test('onboarding controller survives a delayed completion save', () async {
+    final repository = _DelayedServerSetupRepository();
+    final container = ProviderContainer(
+      overrides: [
+        localPreferencesRepositoryProvider.overrideWithValue(repository),
+      ],
+    );
+    addTearDown(container.dispose);
+    final subscription = container.listen(
+      serverSetupCompletedProvider,
+      (_, _) {},
+    );
+    addTearDown(subscription.close);
+
+    expect(await container.read(serverSetupCompletedProvider.future), isFalse);
+
+    final saveFuture = container
+        .read(onboardingControllerProvider)
+        .markServerSetupCompleted();
+    await repository.saveStarted.future;
+    await container.pump();
+
+    repository.completeSave();
+    await saveFuture;
+
+    expect(await container.read(serverSetupCompletedProvider.future), isTrue);
+  });
+
   test(
     'onboarding provider delegates legacy migration to repository',
     () async {
@@ -147,6 +175,32 @@ class _TrackingLocalPreferencesRepository extends LocalPreferencesRepository {
   @override
   Future<void> saveServerSetupCompleted(bool completed) async {
     savedServerSetupCompleted.add(completed);
+  }
+}
+
+class _DelayedServerSetupRepository extends LocalPreferencesRepository {
+  _DelayedServerSetupRepository() : super(preferencesLoader: _unusedLoader);
+
+  final Completer<void> saveStarted = Completer<void>();
+  final Completer<void> _saveCompleter = Completer<void>();
+  bool _completed = false;
+
+  void completeSave() {
+    if (!_saveCompleter.isCompleted) {
+      _saveCompleter.complete();
+    }
+  }
+
+  @override
+  Future<bool> loadServerSetupCompleted() async => _completed;
+
+  @override
+  Future<void> saveServerSetupCompleted(bool completed) async {
+    if (!saveStarted.isCompleted) {
+      saveStarted.complete();
+    }
+    await _saveCompleter.future;
+    _completed = completed;
   }
 }
 
