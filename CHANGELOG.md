@@ -1,5 +1,27 @@
 # Changelog
 
+[English](./CHANGELOG.md) | [简体中文](./CHANGELOG.zh-CN.md)
+
+## v1.1.0 - 2026-07-29
+
+### Added
+- Added fuzzy search to the project list for faster project navigation.
+- Added a file suggestion panel for inserting `@` file mentions in chat.
+- Added swipeable and zoomable image previews for chat attachments.
+- Added Git and branch comparison modes to the file changes view.
+
+### Changed
+- Improved diff view performance by removing syntax highlighting from rendered diffs.
+
+### Fixed
+- Fixed unified patch parsing so file changes render correctly.
+- Fixed todo lists disappearing or becoming unscrollable during conversations.
+- Preserved tool expansion state while message lists update.
+- Prevented detached command dispatch from timing out prematurely.
+- Restored complete chat configuration, including model and variant state.
+- Ensured commands finish autocompleting before messages are sent.
+- Prevented onboarding completion persistence from being interrupted during save.
+
 ## v1.0.0 - 2026-04-09
 
 ### Added
