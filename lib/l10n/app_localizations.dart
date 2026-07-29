@@ -764,6 +764,18 @@ abstract class AppLocalizations {
   /// **'File Changes'**
   String get sessionDiffTitle;
 
+  /// No description provided for @sessionDiffModeGit.
+  ///
+  /// In en, this message translates to:
+  /// **'Git'**
+  String get sessionDiffModeGit;
+
+  /// No description provided for @sessionDiffModeBranch.
+  ///
+  /// In en, this message translates to:
+  /// **'Branch'**
+  String get sessionDiffModeBranch;
+
   /// No description provided for @sessionDiffLoadFailed.
   ///
   /// In en, this message translates to:
@@ -779,7 +791,7 @@ abstract class AppLocalizations {
   /// No description provided for @sessionDiffEmptySubtitle.
   ///
   /// In en, this message translates to:
-  /// **'No file changes were produced in this session'**
+  /// **'No file changes found for this mode'**
   String get sessionDiffEmptySubtitle;
 
   /// No description provided for @sessionDiffFilesCount.

@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../l10n/l10n.dart';
-import '../providers/session_provider.dart';
 import '../route_navigation.dart';
 import '../service/api/models/session.dart';
+import '../service/api/vcs_api.dart';
 import '../theme/app_tokens.dart';
 import '../widgets/message/diff_view.dart';
 import '../widgets/message/unified_diff_parser.dart';
@@ -13,15 +13,22 @@ import '../widgets/message/unified_diff_parser.dart';
 // 页面入口
 // ──────────────────────────────────────────────
 
-class SessionDiffPage extends ConsumerWidget {
-  const SessionDiffPage({super.key, required this.sessionID});
+class SessionDiffPage extends ConsumerStatefulWidget {
+  const SessionDiffPage({super.key, required this.directory});
 
-  final String sessionID;
+  final String directory;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SessionDiffPage> createState() => _SessionDiffPageState();
+}
+
+class _SessionDiffPageState extends ConsumerState<SessionDiffPage> {
+  VcsDiffMode _mode = VcsDiffMode.git;
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final diffsAsync = ref.watch(sessionDiffProvider(sessionID));
+    final diffsAsync = ref.watch(vcsDiffProvider(_mode, widget.directory));
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final tokens = context.tokens;
@@ -45,111 +52,150 @@ class SessionDiffPage extends ConsumerWidget {
           ),
         ),
       ),
-      body: diffsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(
-          child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: context.tokens.pageHorizontalPadding,
-              vertical: 24,
+      body: Column(
+        children: [
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              tokens.pageHorizontalPadding,
+              12,
+              tokens.pageHorizontalPadding,
+              8,
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.error_outline_rounded,
-                  size: 48,
-                  color: tokens.errorSoftForeground,
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  l10n.sessionDiffLoadFailed,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                    color: colorScheme.onSurface,
+            child: SizedBox(
+              width: double.infinity,
+              child: SegmentedButton<VcsDiffMode>(
+                segments: [
+                  ButtonSegment(
+                    value: VcsDiffMode.git,
+                    label: Text(l10n.sessionDiffModeGit),
+                    icon: const Icon(Icons.commit_rounded),
                   ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  '$error',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 12, color: tokens.mutedForeground),
-                ),
-              ],
-            ),
-          ),
-        ),
-        data: (diffs) {
-          if (diffs.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 72,
-                    height: 72,
-                    decoration: BoxDecoration(
-                      color: tokens.accent,
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    child: Icon(
-                      Icons.check_circle_outline_rounded,
-                      size: 36,
-                      color: colorScheme.primary,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    l10n.sessionDiffEmptyTitle,
-                    style: TextStyle(
-                      color: colorScheme.onSurface,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    l10n.sessionDiffEmptySubtitle,
-                    style: TextStyle(
-                      color: tokens.mutedForeground,
-                      fontSize: 13,
-                    ),
+                  ButtonSegment(
+                    value: VcsDiffMode.branch,
+                    label: Text(l10n.sessionDiffModeBranch),
+                    icon: const Icon(Icons.account_tree_outlined),
                   ),
                 ],
+                selected: {_mode},
+                showSelectedIcon: false,
+                onSelectionChanged: (selection) {
+                  setState(() => _mode = selection.single);
+                },
               ),
-            );
-          }
-
-          // 汇总统计
-          final totalAdditions = diffs.fold(0, (s, d) => s + d.additions);
-          final totalDeletions = diffs.fold(0, (s, d) => s + d.deletions);
-
-          return Column(
-            children: [
-              _SummaryBar(
-                fileCount: diffs.length,
-                additions: totalAdditions,
-                deletions: totalDeletions,
-              ),
-              Expanded(
-                child: ListView.separated(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 8,
-                    horizontal: 0,
+            ),
+          ),
+          Expanded(
+            child: diffsAsync.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, _) => Center(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: context.tokens.pageHorizontalPadding,
+                    vertical: 24,
                   ),
-                  itemCount: diffs.length,
-                  separatorBuilder: (context, index) => Divider(
-                    height: 1,
-                    color: tokens.border.withValues(alpha: 0.35),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.error_outline_rounded,
+                        size: 48,
+                        color: tokens.errorSoftForeground,
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        l10n.sessionDiffLoadFailed,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        '$error',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: tokens.mutedForeground,
+                        ),
+                      ),
+                    ],
                   ),
-                  itemBuilder: (context, index) =>
-                      _FileDiffTile(diff: diffs[index]),
                 ),
               ),
-            ],
-          );
-        },
+              data: (diffs) {
+                if (diffs.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 72,
+                          height: 72,
+                          decoration: BoxDecoration(
+                            color: tokens.accent,
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                          child: Icon(
+                            Icons.check_circle_outline_rounded,
+                            size: 36,
+                            color: colorScheme.primary,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          l10n.sessionDiffEmptyTitle,
+                          style: TextStyle(
+                            color: colorScheme.onSurface,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          l10n.sessionDiffEmptySubtitle,
+                          style: TextStyle(
+                            color: tokens.mutedForeground,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                // 汇总统计
+                final totalAdditions = diffs.fold(0, (s, d) => s + d.additions);
+                final totalDeletions = diffs.fold(0, (s, d) => s + d.deletions);
+
+                return Column(
+                  children: [
+                    _SummaryBar(
+                      fileCount: diffs.length,
+                      additions: totalAdditions,
+                      deletions: totalDeletions,
+                    ),
+                    Expanded(
+                      child: ListView.separated(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 8,
+                          horizontal: 0,
+                        ),
+                        itemCount: diffs.length,
+                        separatorBuilder: (context, index) => Divider(
+                          height: 1,
+                          color: tokens.border.withValues(alpha: 0.35),
+                        ),
+                        itemBuilder: (context, index) =>
+                            _FileDiffTile(diff: diffs[index]),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

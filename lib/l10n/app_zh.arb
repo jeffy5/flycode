@@ -208,9 +208,11 @@
   "sessionContextCreatedAt": "创建时间",
   "sessionContextLastActive": "最后活动",
   "sessionDiffTitle": "文件变更",
+  "sessionDiffModeGit": "Git",
+  "sessionDiffModeBranch": "Branch",
   "sessionDiffLoadFailed": "加载失败",
   "sessionDiffEmptyTitle": "暂无文件变更",
-  "sessionDiffEmptySubtitle": "本次会话未产生任何文件改动",
+  "sessionDiffEmptySubtitle": "当前模式下暂无文件变更",
   "sessionDiffFilesCount": "{count} 个文件",
   "@sessionDiffFilesCount": {
     "placeholders": {

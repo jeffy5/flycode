@@ -1,8 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import '../service/api/models/message.dart' hide FileDiff;
+import '../service/api/models/message.dart';
 import '../service/api/models/parts.dart';
 import '../service/api/session_api.dart';
-import '../service/api/models/session.dart';
 
 part 'session_provider.g.dart';
 
@@ -197,12 +196,6 @@ String _messageId(MessageWithParts m) {
   if (info is UserMessage) return info.id;
   if (info is AssistantMessage) return info.id;
   return '';
-}
-
-@riverpod
-Future<List<FileDiff>> sessionDiff(Ref ref, String sessionID) async {
-  final api = await ref.watch(sessionApiProvider.future);
-  return api.getSessionDiff(sessionID);
 }
 
 /// 子 Session 消息列表（只读，支持 SSE 实时更新）

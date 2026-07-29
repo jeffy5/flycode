@@ -200,7 +200,9 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
               _HeaderActionButton(
                 icon: Icons.difference_outlined,
                 tooltip: l10n.homeTooltipFileDiff,
-                onTap: () => context.pushSessionDiffById(selectedSession.id),
+                onTap: () => context.pushSessionDiffByDirectory(
+                  selectedSession.directory,
+                ),
               ),
               const SizedBox(width: 8),
               _HeaderActionButton(

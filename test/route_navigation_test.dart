@@ -17,12 +17,14 @@ Widget _buildHarness({required List<RouteBase> routes, required Widget home}) {
 }
 
 void main() {
-  testWidgets('pushSessionDiffById passes typed diff args', (tester) async {
+  testWidgets('pushSessionDiffByDirectory passes typed diff args', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       _buildHarness(
         home: Builder(
           builder: (context) => ElevatedButton(
-            onPressed: () => context.pushSessionDiffById('session-1'),
+            onPressed: () => context.pushSessionDiffByDirectory('/tmp/project'),
             child: const Text('open'),
           ),
         ),
@@ -31,7 +33,7 @@ void main() {
             path: sessionDiffRoutePath,
             builder: (context, state) {
               final args = state.extra as SessionDiffRouteArgs;
-              return Text(args.sessionID, textDirection: TextDirection.ltr);
+              return Text(args.directory, textDirection: TextDirection.ltr);
             },
           ),
         ],
@@ -41,7 +43,7 @@ void main() {
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
 
-    expect(find.text('session-1'), findsOneWidget);
+    expect(find.text('/tmp/project'), findsOneWidget);
   });
 
   testWidgets('pushFileContentByPath passes typed file args', (tester) async {
