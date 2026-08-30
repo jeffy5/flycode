@@ -94,18 +94,31 @@ final class MessageListStateReducer {
     final newParts = List<Object>.from(message.parts);
     if (partIndex >= 0) {
       final part = message.parts[partIndex];
-      if (part is! TextPart) return current;
-      newParts[partIndex] = TextPart(
-        id: part.id,
-        sessionID: part.sessionID,
-        messageID: part.messageID,
-        type: part.type,
-        text: '${part.text}$delta',
-        synthetic: part.synthetic,
-        ignored: part.ignored,
-        time: part.time,
-        metadata: part.metadata,
-      );
+      if (part is TextPart) {
+        newParts[partIndex] = TextPart(
+          id: part.id,
+          sessionID: part.sessionID,
+          messageID: part.messageID,
+          type: part.type,
+          text: '${part.text}$delta',
+          synthetic: part.synthetic,
+          ignored: part.ignored,
+          time: part.time,
+          metadata: part.metadata,
+        );
+      } else if (part is ReasoningPart) {
+        newParts[partIndex] = ReasoningPart(
+          id: part.id,
+          sessionID: part.sessionID,
+          messageID: part.messageID,
+          type: part.type,
+          text: '${part.text}$delta',
+          metadata: part.metadata,
+          time: part.time,
+        );
+      } else {
+        return current;
+      }
     } else {
       newParts.add(
         TextPart(

@@ -248,6 +248,24 @@ abstract class AppLocalizations {
   /// **'Also when app is in foreground'**
   String get sessionCompletionNotificationModeAlways;
 
+  /// No description provided for @settingsThinking.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-expand thinking'**
+  String get settingsThinking;
+
+  /// No description provided for @thinkingInProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Thinking…'**
+  String get thinkingInProgress;
+
+  /// No description provided for @thoughtForDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Thought for {seconds}s'**
+  String thoughtForDuration(int seconds);
+
   /// No description provided for @mainTabProjects.
   ///
   /// In en, this message translates to:

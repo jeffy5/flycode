@@ -90,6 +90,7 @@ class _MessageListViewState extends State<MessageListView> {
   _PendingScrollAction _pendingScrollAction = _PendingScrollAction.none;
   bool _scrollActionScheduled = false;
   final Map<String, bool> _toolExpandedStates = <String, bool>{};
+  final Map<String, bool> _thinkingExpandedStates = <String, bool>{};
 
   @override
   void initState() {
@@ -283,6 +284,18 @@ class _MessageListViewState extends State<MessageListView> {
     });
   }
 
+  bool? _thinkingIsExpanded(ReasoningPart reasoningPart) =>
+      _thinkingExpandedStates[reasoningPart.id];
+
+  void _setThinkingExpanded(ReasoningPart reasoningPart, bool isExpanded) {
+    if (_thinkingExpandedStates[reasoningPart.id] == isExpanded) {
+      return;
+    }
+    setState(() {
+      _thinkingExpandedStates[reasoningPart.id] = isExpanded;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final sourceMessages = (!_autoFollowBottom && _isDetachedFromBottom)
@@ -335,6 +348,8 @@ class _MessageListViewState extends State<MessageListView> {
                 onNavigateToSubSession: widget.onNavigateToSubSession,
                 toolExpandedResolver: _toolIsExpanded,
                 onToolExpandedChanged: _setToolExpanded,
+                thinkingExpandedResolver: _thinkingIsExpanded,
+                onThinkingExpandedChanged: _setThinkingExpanded,
               );
             },
           ),
@@ -444,6 +459,14 @@ String _bottomAnchorSignature(MessageWithParts message) {
     if (part is TextPart) {
       buffer
         ..write('|text:')
+        ..write(part.id)
+        ..write(':')
+        ..write(part.text.length);
+      continue;
+    }
+    if (part is ReasoningPart) {
+      buffer
+        ..write('|reasoning:')
         ..write(part.id)
         ..write(':')
         ..write(part.text.length);

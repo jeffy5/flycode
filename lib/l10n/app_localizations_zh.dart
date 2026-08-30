@@ -84,6 +84,17 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sessionCompletionNotificationModeAlways => '应用在前台时也发送通知';
 
   @override
+  String get settingsThinking => '自动展开思考';
+
+  @override
+  String get thinkingInProgress => '思考中…';
+
+  @override
+  String thoughtForDuration(int seconds) {
+    return '思考 $seconds 秒';
+  }
+
+  @override
   String get mainTabProjects => '项目';
 
   @override

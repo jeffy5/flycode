@@ -87,6 +87,17 @@ class AppLocalizationsEn extends AppLocalizations {
       'Also when app is in foreground';
 
   @override
+  String get settingsThinking => 'Auto-expand thinking';
+
+  @override
+  String get thinkingInProgress => 'Thinking…';
+
+  @override
+  String thoughtForDuration(int seconds) {
+    return 'Thought for ${seconds}s';
+  }
+
+  @override
   String get mainTabProjects => 'PROJECTS';
 
   @override
