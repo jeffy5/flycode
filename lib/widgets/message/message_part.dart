@@ -104,12 +104,14 @@ const Key kMessageImageGalleryKey = ValueKey('message-image-gallery');
 class _TypewriterMarkdownText extends StatefulWidget {
   final String text;
   final bool animate;
+  final bool showInitialTextImmediately;
   final MarkdownStyleSheet? styleSheet;
 
   const _TypewriterMarkdownText({
     super.key,
     required this.text,
     required this.animate,
+    this.showInitialTextImmediately = false,
     this.styleSheet,
   });
 
@@ -135,7 +137,9 @@ class _TypewriterMarkdownTextState extends State<_TypewriterMarkdownText> {
   void initState() {
     super.initState();
     _chars = widget.text.characters.toList();
-    _visibleCount = _chars.length;
+    _visibleCount = !widget.animate || widget.showInitialTextImmediately
+        ? _chars.length
+        : 0;
     _syncAnimation();
   }
 
@@ -900,6 +904,7 @@ class ThinkingBlockWidget extends StatelessWidget {
                       key: ValueKey('thinking-body-${part.id}'),
                       text: part.text,
                       animate: animate && part.time.end == null,
+                      showInitialTextImmediately: true,
                       styleSheet: _buildThinkingMarkdownStyleSheet(context),
                     ),
                   )

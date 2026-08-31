@@ -143,6 +143,34 @@ void main() {
     expect(completedTaskStyle?.decoration, TextDecoration.lineThrough);
   });
 
+  testWidgets('animates the initial assistant streaming text', (tester) async {
+    const streamingText = 'Streaming assistant response';
+
+    await tester.pumpWidget(
+      buildHarness(
+        brightness: Brightness.light,
+        child: MessagePart(
+          part: TextPart(
+            id: 'streaming-part',
+            sessionID: 'session-1',
+            messageID: 'message-1',
+            type: 'text',
+            text: streamingText,
+          ),
+          isUser: false,
+          isStreaming: true,
+          animateText: true,
+        ),
+      ),
+    );
+
+    expect(find.text(streamingText), findsNothing);
+
+    await tester.pump(const Duration(seconds: 2));
+
+    expect(find.text(streamingText), findsOneWidget);
+  });
+
   testWidgets('renders fenced code blocks as selectable text', (tester) async {
     debugMessageMarkdownLinkLauncher = _noopLauncher;
 
