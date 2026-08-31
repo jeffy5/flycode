@@ -25,6 +25,16 @@
   "sessionCompletionNotificationModeNone": "不发送通知",
   "sessionCompletionNotificationModeBackgroundOnly": "应用在后台时发送通知",
   "sessionCompletionNotificationModeAlways": "应用在前台时也发送通知",
+  "settingsThinking": "自动展开思考",
+  "thinkingInProgress": "思考中…",
+  "thoughtForDuration": "思考 {seconds} 秒",
+  "@thoughtForDuration": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
   "mainTabProjects": "项目",
   "mainTabSettings": "设置",
   "serverConfigConnectServer": "连接服务器",

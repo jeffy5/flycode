@@ -25,6 +25,16 @@
   "sessionCompletionNotificationModeNone": "Never",
   "sessionCompletionNotificationModeBackgroundOnly": "Only when app is in background",
   "sessionCompletionNotificationModeAlways": "Also when app is in foreground",
+  "settingsThinking": "Auto-expand thinking",
+  "thinkingInProgress": "Thinking…",
+  "thoughtForDuration": "Thought for {seconds}s",
+  "@thoughtForDuration": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
   "mainTabProjects": "PROJECTS",
   "mainTabSettings": "SETTINGS",
   "serverConfigConnectServer": "Connect Server",

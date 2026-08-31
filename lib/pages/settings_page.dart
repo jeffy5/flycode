@@ -7,6 +7,7 @@ import '../l10n/l10n.dart';
 import '../providers/app_language_provider.dart';
 import '../providers/session_completion_notification_provider.dart';
 import '../providers/server_config_provider.dart';
+import '../providers/thinking_auto_expand_provider.dart';
 import '../theme/app_tokens.dart';
 
 class SettingsPage extends ConsumerWidget {
@@ -21,6 +22,7 @@ class SettingsPage extends ConsumerWidget {
     final notificationMode = ref.watch(
       sessionCompletionNotificationModeProvider,
     );
+    final thinkingAutoExpand = ref.watch(thinkingAutoExpandProvider);
     final serverUrl = _serverDisplayText(
       asyncServerConfig.value?.baseUrl ?? 'http://127.0.0.1:4096',
     );
@@ -71,6 +73,17 @@ class SettingsPage extends ConsumerWidget {
             iconColor: mutedColor,
             onTap: () {
               context.push('/settings/theme');
+            },
+          ),
+          _SettingsSwitchRow(
+            icon: Icons.psychology_outlined,
+            title: l10n.settingsThinking,
+            iconColor: mutedColor,
+            value: thinkingAutoExpand,
+            onChanged: (value) {
+              ref
+                  .read(thinkingAutoExpandProvider.notifier)
+                  .setAutoExpand(value);
             },
           ),
           _SettingsRow(
@@ -128,6 +141,58 @@ class SettingsPage extends ConsumerWidget {
     }
     final port = parsed.hasPort ? ':${parsed.port}' : '';
     return '${parsed.host}$port';
+  }
+}
+
+class _SettingsSwitchRow extends StatelessWidget {
+  const _SettingsSwitchRow({
+    required this.icon,
+    required this.title,
+    required this.iconColor,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final IconData icon;
+  final String title;
+  final Color iconColor;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final tokens = context.tokens;
+    final titleStyle = TextStyle(
+      fontSize: 16,
+      fontWeight: FontWeight.w600,
+      color: colorScheme.onSurface,
+    );
+
+    return SizedBox(
+      height: 56,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => onChanged(!value),
+          borderRadius: BorderRadius.circular(tokens.radiusXs),
+          splashColor: tokens.accent,
+          highlightColor: tokens.accent,
+          hoverColor: tokens.accent,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Row(
+              children: [
+                Icon(icon, size: 20, color: iconColor),
+                const SizedBox(width: 12),
+                Expanded(child: Text(title, style: titleStyle)),
+                Switch(value: value, onChanged: onChanged),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../l10n/l10n.dart';
 import '../../providers/provider_list_provider.dart';
+import '../../providers/thinking_auto_expand_provider.dart';
 import '../../service/api/models/provider.dart';
 import '../../service/api/models/message.dart';
 import '../../service/api/models/parts.dart'
@@ -23,6 +24,9 @@ class MessageBubble extends ConsumerStatefulWidget {
   final bool Function(ToolPart toolPart)? toolExpandedResolver;
   final void Function(ToolPart toolPart, bool isExpanded)?
   onToolExpandedChanged;
+  final bool? Function(ReasoningPart reasoningPart)? thinkingExpandedResolver;
+  final void Function(ReasoningPart reasoningPart, bool isExpanded)?
+  onThinkingExpandedChanged;
 
   const MessageBubble({
     super.key,
@@ -32,6 +36,8 @@ class MessageBubble extends ConsumerStatefulWidget {
     this.onNavigateToSubSession,
     this.toolExpandedResolver,
     this.onToolExpandedChanged,
+    this.thinkingExpandedResolver,
+    this.onThinkingExpandedChanged,
   });
 
   @override
@@ -350,6 +356,10 @@ class _MessageBubbleState extends ConsumerState<MessageBubble> {
     final lastTextPartIndex = parts.lastIndexWhere(
       (p) => p is TextPart && p.synthetic != true && p.text.isNotEmpty,
     );
+    final lastAnimatedReasoningIndex = parts.lastIndexWhere(
+      (p) => p is ReasoningPart && p.text.isNotEmpty,
+    );
+    final thinkingAutoExpand = ref.watch(thinkingAutoExpandProvider);
     final imagePreviewContexts = _buildImagePreviewContexts(parts);
 
     return Padding(
@@ -358,28 +368,14 @@ class _MessageBubbleState extends ConsumerState<MessageBubble> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           for (var i = 0; i < parts.length; i++) ...[
-            MessagePart(
-              key: _partKey(parts[i], i),
-              part: parts[i],
-              isUser: false,
+            _buildAssistantMessagePart(
+              parts,
+              index: i,
               isStreaming: isStreaming,
-              animateText:
-                  widget.isLatestMessage &&
-                  isStreaming &&
-                  i == lastAnimatedTextPartIndex,
-              onNavigateToSubSession: widget.onNavigateToSubSession,
-              toolIsExpanded: parts[i] is ToolPart
-                  ? widget.toolExpandedResolver?.call(parts[i] as ToolPart)
-                  : null,
-              onToolExpandedChanged: parts[i] is ToolPart
-                  ? (isExpanded) => widget.onToolExpandedChanged?.call(
-                      parts[i] as ToolPart,
-                      isExpanded,
-                    )
-                  : null,
-              imagePreviewUrls: imagePreviewContexts[i]?.urls,
-              imagePreviewInitialIndex:
-                  imagePreviewContexts[i]?.initialIndex ?? 0,
+              lastAnimatedTextPartIndex: lastAnimatedTextPartIndex,
+              lastAnimatedReasoningIndex: lastAnimatedReasoningIndex,
+              thinkingAutoExpand: thinkingAutoExpand,
+              imagePreviewContexts: imagePreviewContexts,
             ),
             if (i == lastTextPartIndex) ...[
               const SizedBox(height: 6),
@@ -393,6 +389,50 @@ class _MessageBubbleState extends ConsumerState<MessageBubble> {
           ],
         ],
       ),
+    );
+  }
+
+  Widget _buildAssistantMessagePart(
+    List<Object> parts, {
+    required int index,
+    required bool isStreaming,
+    required int lastAnimatedTextPartIndex,
+    required int lastAnimatedReasoningIndex,
+    required bool thinkingAutoExpand,
+    required Map<int, _ImagePreviewContext> imagePreviewContexts,
+  }) {
+    final part = parts[index];
+    final thinkingExpanded = part is ReasoningPart
+        ? (widget.thinkingExpandedResolver?.call(part) ?? thinkingAutoExpand)
+        : null;
+    return MessagePart(
+      key: _partKey(part, index),
+      part: part,
+      isUser: false,
+      isStreaming: isStreaming,
+      animateText:
+          widget.isLatestMessage &&
+          isStreaming &&
+          index == lastAnimatedTextPartIndex,
+      animateThinking:
+          widget.isLatestMessage &&
+          isStreaming &&
+          index == lastAnimatedReasoningIndex &&
+          (thinkingExpanded ?? false),
+      onNavigateToSubSession: widget.onNavigateToSubSession,
+      toolIsExpanded: part is ToolPart
+          ? widget.toolExpandedResolver?.call(part)
+          : null,
+      onToolExpandedChanged: part is ToolPart
+          ? (isExpanded) => widget.onToolExpandedChanged?.call(part, isExpanded)
+          : null,
+      thinkingIsExpanded: thinkingExpanded,
+      onThinkingExpandedChanged: part is ReasoningPart
+          ? (isExpanded) =>
+                widget.onThinkingExpandedChanged?.call(part, isExpanded)
+          : null,
+      imagePreviewUrls: imagePreviewContexts[index]?.urls,
+      imagePreviewInitialIndex: imagePreviewContexts[index]?.initialIndex ?? 0,
     );
   }
 

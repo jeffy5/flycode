@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:markdown/markdown.dart' as md;
+import '../../l10n/l10n.dart';
 import '../../service/api/models/parts.dart';
 import '../../theme/app_tokens.dart';
 import 'code_block_widget.dart';
@@ -16,9 +17,12 @@ class MessagePart extends StatelessWidget {
   final bool isUser;
   final bool isStreaming;
   final bool animateText;
+  final bool animateThinking;
   final void Function(String sessionId)? onNavigateToSubSession;
   final bool? toolIsExpanded;
   final ValueChanged<bool>? onToolExpandedChanged;
+  final bool? thinkingIsExpanded;
+  final ValueChanged<bool>? onThinkingExpandedChanged;
   final List<String>? imagePreviewUrls;
   final int imagePreviewInitialIndex;
 
@@ -28,9 +32,12 @@ class MessagePart extends StatelessWidget {
     required this.isUser,
     this.isStreaming = false,
     this.animateText = false,
+    this.animateThinking = false,
     this.onNavigateToSubSession,
     this.toolIsExpanded,
     this.onToolExpandedChanged,
+    this.thinkingIsExpanded,
+    this.onThinkingExpandedChanged,
     this.imagePreviewUrls,
     this.imagePreviewInitialIndex = 0,
   });
@@ -39,6 +46,20 @@ class MessagePart extends StatelessWidget {
   Widget build(BuildContext context) {
     if (part is CompactionPart) {
       return const _CompactionDivider();
+    }
+    if (part is ReasoningPart) {
+      final reasoningPart = part as ReasoningPart;
+      return Padding(
+        padding: const EdgeInsets.only(top: 4),
+        child: ThinkingBlockWidget(
+          key: ValueKey('thinking-${reasoningPart.id}'),
+          part: reasoningPart,
+          isStreaming: isStreaming,
+          isExpanded: thinkingIsExpanded ?? false,
+          animate: animateThinking,
+          onExpandedChanged: onThinkingExpandedChanged,
+        ),
+      );
     }
     if (part is TextPart) {
       final textPart = part as TextPart;
@@ -83,11 +104,15 @@ const Key kMessageImageGalleryKey = ValueKey('message-image-gallery');
 class _TypewriterMarkdownText extends StatefulWidget {
   final String text;
   final bool animate;
+  final bool showInitialTextImmediately;
+  final MarkdownStyleSheet? styleSheet;
 
   const _TypewriterMarkdownText({
     super.key,
     required this.text,
     required this.animate,
+    this.showInitialTextImmediately = false,
+    this.styleSheet,
   });
 
   @override
@@ -112,7 +137,9 @@ class _TypewriterMarkdownTextState extends State<_TypewriterMarkdownText> {
   void initState() {
     super.initState();
     _chars = widget.text.characters.toList();
-    _visibleCount = widget.animate ? 0 : _chars.length;
+    _visibleCount = !widget.animate || widget.showInitialTextImmediately
+        ? _chars.length
+        : 0;
     _syncAnimation();
   }
 
@@ -309,6 +336,8 @@ class _TypewriterMarkdownTextState extends State<_TypewriterMarkdownText> {
   @override
   Widget build(BuildContext context) {
     final text = _chars.take(_visibleCount).join();
+    final styleSheet =
+        widget.styleSheet ?? buildMessageMarkdownStyleSheet(context);
 
     return RepaintBoundary(
       child: MarkdownBody(
@@ -316,11 +345,11 @@ class _TypewriterMarkdownTextState extends State<_TypewriterMarkdownText> {
         selectable: true,
         builders: {
           'pre': CodeBlockBuilder(),
-          'ul': _MarkdownListBuilder(ordered: false),
-          'ol': _MarkdownListBuilder(ordered: true),
+          'ul': _MarkdownListBuilder(ordered: false, styleSheet: styleSheet),
+          'ol': _MarkdownListBuilder(ordered: true, styleSheet: styleSheet),
         },
         onTapLink: (text, href, title) => openMessageMarkdownLink(href),
-        styleSheet: buildMessageMarkdownStyleSheet(context),
+        styleSheet: styleSheet,
       ),
     );
   }
@@ -328,8 +357,9 @@ class _TypewriterMarkdownTextState extends State<_TypewriterMarkdownText> {
 
 class _MarkdownListBuilder extends MarkdownElementBuilder {
   final bool ordered;
+  final MarkdownStyleSheet? styleSheet;
 
-  _MarkdownListBuilder({required this.ordered});
+  _MarkdownListBuilder({required this.ordered, this.styleSheet});
 
   @override
   bool isBlockElement() => true;
@@ -354,7 +384,8 @@ class _MarkdownListBuilder extends MarkdownElementBuilder {
         : 1;
     final theme = Theme.of(context);
     final tokens = context.tokens;
-    final styleSheet = buildMessageMarkdownStyleSheet(context);
+    final styleSheet =
+        this.styleSheet ?? buildMessageMarkdownStyleSheet(context);
     final bulletStyle =
         styleSheet.listBullet ??
         theme.textTheme.bodyMedium?.copyWith(fontSize: 14, height: 1.45);
@@ -373,6 +404,7 @@ class _MarkdownListBuilder extends MarkdownElementBuilder {
                       .where((child) => child.tag == 'ul' || child.tag == 'ol')
                       .toList() ??
                   const <md.Element>[],
+              styleSheet: styleSheet,
             )
           else
             _MarkdownListItem(
@@ -387,6 +419,7 @@ class _MarkdownListBuilder extends MarkdownElementBuilder {
                   const <md.Element>[],
               textColor: preferredStyle?.color ?? theme.colorScheme.onSurface,
               markerColor: tokens.mutedForeground,
+              styleSheet: styleSheet,
             ),
           if (i != items.length - 1) const SizedBox(height: 4),
         ],
@@ -399,20 +432,23 @@ class _MarkdownTaskListItem extends StatelessWidget {
   final bool checked;
   final String contentMarkdown;
   final List<md.Element> nestedLists;
+  final MarkdownStyleSheet styleSheet;
 
   const _MarkdownTaskListItem({
     required this.checked,
     required this.contentMarkdown,
     required this.nestedLists,
+    required this.styleSheet,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final tokens = context.tokens;
-    final styleSheet = buildMessageMarkdownStyleSheet(
-      context,
-    ).copyWith(blockSpacing: 0, pPadding: EdgeInsets.zero);
+    final styleSheet = this.styleSheet.copyWith(
+      blockSpacing: 0,
+      pPadding: EdgeInsets.zero,
+    );
     final checkboxBackground = checked
         ? theme.colorScheme.primary
         : theme.colorScheme.surface;
@@ -466,8 +502,14 @@ class _MarkdownTaskListItem extends StatelessWidget {
                     selectable: true,
                     builders: {
                       'pre': CodeBlockBuilder(),
-                      'ul': _MarkdownListBuilder(ordered: false),
-                      'ol': _MarkdownListBuilder(ordered: true),
+                      'ul': _MarkdownListBuilder(
+                        ordered: false,
+                        styleSheet: styleSheet,
+                      ),
+                      'ol': _MarkdownListBuilder(
+                        ordered: true,
+                        styleSheet: styleSheet,
+                      ),
                     },
                     onTapLink: (text, href, title) =>
                         openMessageMarkdownLink(href),
@@ -488,7 +530,7 @@ class _MarkdownTaskListItem extends StatelessWidget {
                 ),
               for (final nested in nestedLists) ...[
                 const SizedBox(height: 4),
-                _NestedMarkdownList(element: nested),
+                _NestedMarkdownList(element: nested, styleSheet: styleSheet),
               ],
             ],
           ),
@@ -505,6 +547,7 @@ class _MarkdownListItem extends StatelessWidget {
   final List<md.Element> nestedLists;
   final Color textColor;
   final Color markerColor;
+  final MarkdownStyleSheet styleSheet;
 
   const _MarkdownListItem({
     required this.marker,
@@ -513,13 +556,15 @@ class _MarkdownListItem extends StatelessWidget {
     required this.nestedLists,
     required this.textColor,
     required this.markerColor,
+    required this.styleSheet,
   });
 
   @override
   Widget build(BuildContext context) {
-    final styleSheet = buildMessageMarkdownStyleSheet(
-      context,
-    ).copyWith(blockSpacing: 0, pPadding: EdgeInsets.zero);
+    final styleSheet = this.styleSheet.copyWith(
+      blockSpacing: 0,
+      pPadding: EdgeInsets.zero,
+    );
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -545,8 +590,14 @@ class _MarkdownListItem extends StatelessWidget {
                   selectable: true,
                   builders: {
                     'pre': CodeBlockBuilder(),
-                    'ul': _MarkdownListBuilder(ordered: false),
-                    'ol': _MarkdownListBuilder(ordered: true),
+                    'ul': _MarkdownListBuilder(
+                      ordered: false,
+                      styleSheet: styleSheet,
+                    ),
+                    'ol': _MarkdownListBuilder(
+                      ordered: true,
+                      styleSheet: styleSheet,
+                    ),
                   },
                   onTapLink: (text, href, title) =>
                       openMessageMarkdownLink(href),
@@ -554,7 +605,7 @@ class _MarkdownListItem extends StatelessWidget {
                 ),
               for (final nested in nestedLists) ...[
                 const SizedBox(height: 4),
-                _NestedMarkdownList(element: nested),
+                _NestedMarkdownList(element: nested, styleSheet: styleSheet),
               ],
             ],
           ),
@@ -566,12 +617,16 @@ class _MarkdownListItem extends StatelessWidget {
 
 class _NestedMarkdownList extends StatelessWidget {
   final md.Element element;
+  final MarkdownStyleSheet? styleSheet;
 
-  const _NestedMarkdownList({required this.element});
+  const _NestedMarkdownList({required this.element, this.styleSheet});
 
   @override
   Widget build(BuildContext context) {
-    final builder = _MarkdownListBuilder(ordered: element.tag == 'ol');
+    final builder = _MarkdownListBuilder(
+      ordered: element.tag == 'ol',
+      styleSheet: styleSheet,
+    );
     return builder.visitElementAfterWithContext(context, element, null, null) ??
         const SizedBox.shrink();
   }
@@ -792,4 +847,176 @@ class MessageImageGallery extends StatelessWidget {
       ),
     );
   }
+}
+
+const Key kThinkingBlockHeaderKey = Key('thinking_block.header');
+const Key kThinkingBlockBodyKey = Key('thinking_block.body');
+
+class ThinkingBlockWidget extends StatelessWidget {
+  final ReasoningPart part;
+  final bool isStreaming;
+  final bool isExpanded;
+  final ValueChanged<bool>? onExpandedChanged;
+  final bool animate;
+
+  const ThinkingBlockWidget({
+    super.key,
+    required this.part,
+    required this.isStreaming,
+    required this.isExpanded,
+    this.onExpandedChanged,
+    this.animate = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: tokens.accent,
+        borderRadius: BorderRadius.circular(tokens.radiusXs),
+        border: Border.all(color: tokens.border.withValues(alpha: 0.8)),
+      ),
+      clipBehavior: Clip.hardEdge,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _ThinkingHeader(
+            part: part,
+            isStreaming: isStreaming,
+            isExpanded: isExpanded,
+            onToggle: onExpandedChanged == null
+                ? null
+                : () => onExpandedChanged!(!isExpanded),
+          ),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 160),
+            switchInCurve: Curves.easeOut,
+            switchOutCurve: Curves.easeIn,
+            transitionBuilder: (child, animation) =>
+                SizeTransition(sizeFactor: animation, child: child),
+            child: isExpanded && part.text.isNotEmpty
+                ? Padding(
+                    key: kThinkingBlockBodyKey,
+                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+                    child: _TypewriterMarkdownText(
+                      key: ValueKey('thinking-body-${part.id}'),
+                      text: part.text,
+                      animate: animate && part.time.end == null,
+                      showInitialTextImmediately: true,
+                      styleSheet: _buildThinkingMarkdownStyleSheet(context),
+                    ),
+                  )
+                : const SizedBox(width: double.infinity),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ThinkingHeader extends StatelessWidget {
+  final ReasoningPart part;
+  final bool isStreaming;
+  final bool isExpanded;
+  final VoidCallback? onToggle;
+
+  const _ThinkingHeader({
+    required this.part,
+    required this.isStreaming,
+    required this.isExpanded,
+    this.onToggle,
+  });
+
+  String _label(BuildContext context) {
+    final time = part.time;
+    final start = time.start;
+    final end = time.end;
+    if (part.text.isEmpty && (isStreaming || end == null)) {
+      return context.l10n.thinkingInProgress;
+    }
+    if (start == null || end == null) {
+      return context.l10n.thinkingInProgress;
+    }
+    final seconds = ((end - start) / 1000).ceil().clamp(1, 86400);
+    return context.l10n.thoughtForDuration(seconds);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final inProgress = isStreaming && part.time.end == null;
+
+    return InkWell(
+      key: kThinkingBlockHeaderKey,
+      onTap: onToggle,
+      borderRadius: BorderRadius.circular(tokens.radiusXs),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        child: Row(
+          children: [
+            Icon(
+              Icons.psychology_outlined,
+              size: 14,
+              color: tokens.mutedForeground,
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                _label(context),
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: tokens.mutedForeground,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            if (inProgress) ...[
+              const SizedBox(width: 6),
+              SizedBox(
+                width: 10,
+                height: 10,
+                child: CircularProgressIndicator(
+                  strokeWidth: 1.5,
+                  color: tokens.mutedForeground,
+                ),
+              ),
+            ],
+            const SizedBox(width: 4),
+            AnimatedRotation(
+              turns: isExpanded ? 0.5 : 0,
+              duration: const Duration(milliseconds: 160),
+              child: Icon(
+                Icons.keyboard_arrow_down_rounded,
+                size: 16,
+                color: tokens.mutedForeground,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+MarkdownStyleSheet _buildThinkingMarkdownStyleSheet(BuildContext context) {
+  final tokens = context.tokens;
+  final base = buildMessageMarkdownStyleSheet(context);
+  final body = base.p?.copyWith(
+    fontSize: 13,
+    height: 1.55,
+    color: tokens.mutedForeground,
+  );
+
+  return base.copyWith(
+    p: body,
+    strong: body?.copyWith(fontWeight: FontWeight.w600),
+    em: body?.copyWith(fontStyle: FontStyle.italic),
+    a: body?.copyWith(fontWeight: FontWeight.w500),
+    listBullet: body?.copyWith(fontSize: 13),
+    blockSpacing: 8,
+  );
 }

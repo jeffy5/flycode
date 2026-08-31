@@ -566,4 +566,161 @@ void main() {
       expect((updated.parts.single as TextPart).text, 'hello world');
     },
   );
+
+  test(
+    'appendPartDelta with text field appends to existing reasoning part',
+    () async {
+      final initial = msg.MessageWithParts(
+        info: _messageWithText(
+          sessionID: _kSessionId,
+          messageID: _kMessageId,
+          text: 'placeholder',
+        ).info,
+        parts: <Object>[
+          _reasoningPart(
+            sessionID: _kSessionId,
+            messageID: _kMessageId,
+            partID: 'part-reasoning',
+            text: 'start',
+          ),
+        ],
+      );
+      final api = _FakeSessionApi(<String, List<msg.MessageWithParts>>{
+        _kSessionId: <msg.MessageWithParts>[initial],
+      });
+      final container = ProviderContainer(
+        overrides: [sessionApiProvider.overrideWith((ref) async => api)],
+      );
+      addTearDown(container.dispose);
+
+      await container.read(subSessionMessagesProvider(_kSessionId).future);
+
+      container
+          .read(subSessionMessagesProvider(_kSessionId).notifier)
+          .appendPartDelta(
+            _kSessionId,
+            _kMessageId,
+            'part-reasoning',
+            'text',
+            ' more',
+          );
+
+      final updated = container
+          .read(subSessionMessagesProvider(_kSessionId))
+          .requireValue
+          .single;
+      expect(updated.parts, hasLength(1));
+      expect(updated.parts.single, isA<ReasoningPart>());
+      expect((updated.parts.single as ReasoningPart).text, 'start more');
+    },
+  );
+
+  test('appendPartDelta ignores unknown delta field', () async {
+    final initial = _messageWithText(
+      sessionID: _kSessionId,
+      messageID: _kMessageId,
+      text: 'hello',
+    );
+    final api = _FakeSessionApi(<String, List<msg.MessageWithParts>>{
+      _kSessionId: <msg.MessageWithParts>[initial],
+    });
+    final container = ProviderContainer(
+      overrides: [sessionApiProvider.overrideWith((ref) async => api)],
+    );
+    addTearDown(container.dispose);
+
+    await container.read(subSessionMessagesProvider(_kSessionId).future);
+
+    container
+        .read(subSessionMessagesProvider(_kSessionId).notifier)
+        .appendPartDelta(
+          _kSessionId,
+          _kMessageId,
+          'part-$_kMessageId',
+          'tool',
+          'x',
+        );
+
+    final updated = container
+        .read(subSessionMessagesProvider(_kSessionId))
+        .requireValue
+        .single;
+    expect(updated.parts, hasLength(1));
+    expect((updated.parts.single as TextPart).text, 'hello');
+  });
+
+  test(
+    'global message.part.delta with text field appends to reasoning part',
+    () async {
+      final initial = msg.MessageWithParts(
+        info: _messageWithText(
+          sessionID: _kSessionId,
+          messageID: _kMessageId,
+          text: 'placeholder',
+        ).info,
+        parts: <Object>[
+          _reasoningPart(
+            sessionID: _kSessionId,
+            messageID: _kMessageId,
+            partID: 'part-reasoning',
+            text: 'start',
+          ),
+        ],
+      );
+      final sessionApi = _FakeSessionApi(<String, List<msg.MessageWithParts>>{
+        _kSessionId: <msg.MessageWithParts>[initial],
+      });
+      final controller = StreamController<GlobalEvent>();
+      final globalApi = _FakeGlobalApi(controller);
+      final container = ProviderContainer(
+        overrides: [
+          sessionApiProvider.overrideWith((ref) async => sessionApi),
+          globalApiProvider.overrideWith((ref) async => globalApi),
+        ],
+      );
+      addTearDown(() async {
+        await controller.close();
+        container.dispose();
+      });
+
+      await container.read(sessionMessagesProvider(_kSessionId).future);
+      container.read(currentDirectoryProvider.notifier).set(_kDirectory);
+      final sessionState = container
+          .listen<AsyncValue<List<msg.MessageWithParts>>>(
+            sessionMessagesProvider(_kSessionId),
+            (previous, next) {},
+            fireImmediately: true,
+          );
+      addTearDown(sessionState.close);
+      final sub = container.listen<AsyncValue<GlobalEvent>>(
+        globalEventListenerProvider,
+        (previous, next) {},
+        fireImmediately: true,
+      );
+      addTearDown(sub.close);
+      await _flushAsyncWork();
+
+      controller.add(
+        GlobalEvent(
+          directory: _kDirectory,
+          payload: EventMessagePartDelta(
+            type: 'message.part.delta',
+            sessionID: _kSessionId,
+            messageID: _kMessageId,
+            partID: 'part-reasoning',
+            field: 'text',
+            delta: ' more',
+          ),
+        ),
+      );
+      await _flushAsyncWork();
+
+      final updated = container
+          .read(sessionMessagesProvider(_kSessionId))
+          .requireValue
+          .single;
+      expect(updated.parts, hasLength(1));
+      expect((updated.parts.single as ReasoningPart).text, 'start more');
+    },
+  );
 }
