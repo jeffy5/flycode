@@ -2,6 +2,17 @@
 
 [English](./README.md) | [简体中文](./README.zh-CN.md)
 
+## ⚠️ Deprecated
+
+OpenCode has moved to v2. **FlyCode does not support OpenCode v2 and is now deprecated.** The documentation below is retained for reference for older versions and does not apply to OpenCode v2.
+
+I have largely switched to [Herdr](https://herdr.dev/) and built a new client, **Flitra**, to access Herdr workspaces, terminals, and coding agents on my own computer remotely over SSH. Flitra is now available on the App Store—give it a try if you are interested!
+
+- Official website: [flitra.app](https://www.flitra.app/)
+- Download: [App Store](https://apps.apple.com/us/app/flitra/id6811557792)
+
+Thank you for supporting FlyCode!
+
 ## Description and Screenshots
 
 FlyCode is a mobile client for `opencode`, built for Android and iOS. It lets you connect to your `opencode server`, browse projects, continue coding sessions, and work with the agent from a phone-first interface.
