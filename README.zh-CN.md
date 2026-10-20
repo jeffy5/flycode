@@ -2,6 +2,17 @@
 
 [English](./README.md) | [简体中文](./README.zh-CN.md)
 
+## ⚠️ 已弃用（Deprecated）
+
+OpenCode 已更新到 v2，**FlyCode 不支持 OpenCode v2，本项目现已弃用**。下方文档仅保留供旧版本参考，不适用于 OpenCode v2。
+
+我目前已基本切换到 [Herdr](https://herdr.dev/)，并开发了新的客户端 **Flitra**，通过 SSH 连接自己的电脑，远程访问 Herdr 工作区、终端和 coding agents。Flitra 已上架 App Store，感兴趣的朋友欢迎下载尝试！
+
+- 官方网站：[flitra.app](https://www.flitra.app/)
+- 下载：[App Store](https://apps.apple.com/us/app/flitra/id6811557792)
+
+感谢大家对 FlyCode 的支持！
+
 ## Description and Screenshots
 
 FlyCode 是一个面向 Android 和 iOS 的 `opencode` 移动客户端。你可以通过它连接自己的 `opencode server`，浏览项目、继续已有会话，并在移动端和 coding agent 协作。
